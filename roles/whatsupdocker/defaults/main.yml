@@ -1,0 +1,22 @@
+---
+# What's Up Docker role defaults
+
+# Docker image
+whatsupdocker_image: "getwud/wud:latest"
+
+# Paths
+whatsupdocker_dir: "{{ homelab_dir }}/whatsupdocker"
+
+# Network
+whatsupdocker_network: homelab
+
+# Docker Socket Proxy connection
+docker_socket_proxy_endpoint: "tcp://docker-socket-proxy:2375"
+
+# Watcher configuration
+whatsupdocker_cron: "0 */6 * * *"  # Every 6 hours
+whatsupdocker_watchbydefault: true
+whatsupdocker_watchevents: true
+
+# Container restart policy
+container_restart_policy: unless-stopped

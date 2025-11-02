@@ -11,7 +11,7 @@ Migrate the existing monolithic docker-compose homelab setup to a modern Ansible
 
 ---
 
-## 📊 Implementation Progress (Updated 2025-11-02)
+## 📊 Implementation Progress (Updated 2025-01-11)
 
 | Phase | Status | Notes |
 |-------|--------|-------|
@@ -26,16 +26,16 @@ Migrate the existing monolithic docker-compose homelab setup to a modern Ansible
 | **Phase 4.2: Traefik** | **✅ COMPLETE** | Depends on 4.1, ready to deploy |
 | **Phase 4.3: Beszel Roles** | **✅ COMPLETE** | Hub + Agent roles ready, uses shared public key |
 | **Phase 4.4: Samba** | **✅ COMPLETE** | File sharing role ready |
-| Phase 5: Application Services | 🔲 Not Started | 18+ service roles to create (code-server, navidrome, etc.) |
+| Phase 5: Application Services | 🔄 IN PROGRESS | 2/20 complete (dozzle ✅, whatsupdocker ✅) |
 | Phase 6: Playbooks | 🔲 Not Started | Orchestration playbooks needed |
 | Phase 7: Testing | 🔲 Not Started | Per-machine deployment testing |
 | Phase 8: Documentation | 🔲 Not Started | End-user docs (Traefik role docs ✅) |
 | Phase 9: Repository Prep | 🔲 Not Started | Final git checks and secrets verification |
 
-**Current Status:** Phases 1, 2, 3 (all), and 4 COMPLETE. Core infrastructure ready. Now moving to Phase 5 (Application Services).
+**Current Status:** Phases 1, 2, 3 (all), and 4 COMPLETE. Phase 5 IN PROGRESS - Common services complete (dozzle, whatsupdocker). 18 machine-specific services remaining.
 
 **Next Steps:**
-1. Phase 5: Create remaining 18+ application service roles
+1. Phase 5: Create remaining 18 machine-specific application service roles (orac: 13, jarvis: 1, seraph: 4)
 2. Phase 6: Build orchestration playbooks (site.yml)
 3. Phase 7-9: Testing, documentation, and repo prep
 4. **THEN**: User fills secrets and deploys once

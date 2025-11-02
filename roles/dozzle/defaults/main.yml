@@ -1,0 +1,17 @@
+---
+# Dozzle role defaults
+
+# Docker image
+dozzle_image: "amir20/dozzle:latest"
+
+# Paths
+dozzle_dir: "{{ homelab_dir }}/dozzle"
+
+# Network
+dozzle_network: homelab
+
+# Docker Socket Proxy connection
+docker_socket_proxy_endpoint: "tcp://docker-socket-proxy:2375"
+
+# Container restart policy
+container_restart_policy: unless-stopped

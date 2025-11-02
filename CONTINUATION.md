@@ -1,0 +1,69 @@
+# Continuation: Next Steps
+
+## ✅ Phase 3: Core Infrastructure - COMPLETE
+
+All foundational infrastructure roles complete:
+- Phase 3.1: Common (system setup)
+- Phase 3.2: Docker (container engine + networks)
+- Phase 3.3: NAS Mounts (storage, 3 shares on orac, 1 on jarvis/seraph)
+
+## ✅ Phase 4: Core Services - COMPLETE
+
+All core service roles complete:
+- docker_socket_proxy
+- traefik
+- beszel (hub)
+- beszel_agent
+- samba
+
+---
+
+## 🔄 Phase 5: Application Services - IN PROGRESS
+
+**Goal:** Create roles for 18+ application services
+
+### ✅ Common Services (2/2 COMPLETE)
+- ✅ dozzle (log viewer) - COMPLETE
+- ✅ whatsupdocker (update checker) - COMPLETE
+
+### Service Categories
+
+**Common (all machines):**
+- ✅ dozzle (log viewer) - COMPLETE
+- ✅ whatsupdocker (update checker) - COMPLETE
+
+**orac (13 unique services):**
+- code-server
+- portainer
+- navidrome
+- metube
+- it-tools
+- omni-tools
+- hugo
+- chartdb
+- sshwifty
+- chromadb
+- drawio
+
+**jarvis (1 unique service):**
+- homeassistant
+
+**seraph (4 unique services):**
+- adguardhome
+- uptime-kuma
+- watchyourlan
+- gocron
+
+### Build Order
+
+1. ✅ Start with common services (dozzle, whatsupdocker) - COMPLETE
+2. Next: Machine-specific services by complexity:
+   - Simple web services first (portainer, it-tools, omni-tools, hugo, etc.)
+   - Services with dependencies last (homeassistant, adguardhome, navidrome)
+
+### After Phase 5
+
+- Phase 6: Orchestration playbooks (site.yml)
+- Phase 7: Testing
+- Phase 8: Documentation
+- Phase 9: Repository prep

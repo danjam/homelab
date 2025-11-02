@@ -1,0 +1,7 @@
+---
+# Dozzle handlers
+
+- name: restart dozzle
+  community.docker.docker_compose_v2:
+    project_src: "{{ dozzle_dir }}"
+    state: restarted

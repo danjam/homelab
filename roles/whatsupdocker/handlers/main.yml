@@ -1,0 +1,7 @@
+---
+# What's Up Docker handlers
+
+- name: restart whatsupdocker
+  community.docker.docker_compose_v2:
+    project_src: "{{ whatsupdocker_dir }}"
+    state: restarted

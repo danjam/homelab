@@ -1,0 +1,35 @@
+---
+services:
+  whatsupdocker:
+    image: {{ whatsupdocker_image }}
+    container_name: whatsupdocker
+    restart: {{ container_restart_policy }}
+    environment:
+      - WUD_WATCHER_LOCAL_HOST=docker-socket-proxy
+      - WUD_WATCHER_LOCAL_PORT=2375
+      - WUD_WATCHER_LOCAL_CRON={{ whatsupdocker_cron }}
+      - WUD_WATCHER_LOCAL_WATCHBYDEFAULT={{ whatsupdocker_watchbydefault | string | lower }}
+      - WUD_WATCHER_LOCAL_WATCHEVENTS={{ whatsupdocker_watchevents | string | lower }}
+    networks:
+      - {{ whatsupdocker_network }}
+      - {{ hostname }}_docker_socket
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whatsupdocker.rule=Host(`wud.{{ domain }}`)"
+      - "traefik.http.routers.whatsupdocker.entrypoints=websecure"
+      - "traefik.http.routers.whatsupdocker.tls.certresolver=letsencrypt"
+      - "traefik.http.services.whatsupdocker.loadbalancer.server.port=3000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  {{ whatsupdocker_network }}:
+    name: {{ whatsupdocker_network }}
+    external: true
+  {{ hostname }}_docker_socket:
+    name: {{ hostname }}_docker_socket
+    external: true

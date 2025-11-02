@@ -1,0 +1,33 @@
+---
+services:
+  dozzle:
+    image: {{ dozzle_image }}
+    container_name: dozzle
+    restart: {{ container_restart_policy }}
+    environment:
+      - DOCKER_HOST={{ docker_socket_proxy_endpoint }}
+      - DOZZLE_LEVEL=info
+      - DOZZLE_FILTER=status=running
+    networks:
+      - {{ dozzle_network }}
+      - {{ hostname }}_docker_socket
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.{{ domain }}`)"
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
+      - "traefik.http.routers.dozzle.tls.certresolver=letsencrypt"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  {{ dozzle_network }}:
+    name: {{ dozzle_network }}
+    external: true
+  {{ hostname }}_docker_socket:
+    name: {{ hostname }}_docker_socket
+    external: true
