@@ -18,7 +18,8 @@ Migrate the existing monolithic docker-compose homelab setup to a modern Ansible
 | Phase 0: Pre-Migration | ⏭️ SKIPPED | Not needed - building automation, not migrating yet |
 | **Phase 1: Security Foundation** | **✅ COMPLETE** | Single vault consolidated, all real credentials removed, beszel config fixed |
 | **Phase 2: Ansible Structure** | **✅ COMPLETE** | Inventory configured with orac/jarvis/seraph, all vars set |
-| Phase 3: Core Infrastructure | ✅ COMPLETE | Common ✅, Docker ✅, NAS ✅ |
+| Phase 3: Core Infrastructure | 🔄 IN PROGRESS | Tailscale 🔲, Common ✅, Docker ✅, NAS ✅ |
+| **Phase 3.0: Tailscale Role** | **🔲 NOT STARTED** | VPN networking layer for inter-machine communication |
 | **Phase 3.1: Common Role** | **✅ COMPLETE** | Base system setup with packages, directories, update scripts |
 | **Phase 3.2: Docker Role** | **✅ COMPLETE** | Docker CE, Compose v2, external networks (homelab, monitoring) |
 | **Phase 3.3: NAS Mounts Role** | **✅ COMPLETE** | Systemd-based NAS mounting for all machines (BACKUPS on all) |
@@ -32,13 +33,14 @@ Migrate the existing monolithic docker-compose homelab setup to a modern Ansible
 | Phase 8: Documentation | 🔲 Not Started | End-user docs (Traefik role docs ✅) |
 | Phase 9: Repository Prep | 🔲 Not Started | Final git checks and secrets verification |
 
-**Current Status:** Phases 1, 2, 3 (all), and 4 COMPLETE. Phase 5 IN PROGRESS - Common services complete (dozzle, whatsupdocker). 18 machine-specific services remaining.
+**Current Status:** Phases 1, 2 COMPLETE. Phase 3 mostly complete (Tailscale role missing). Phase 4 COMPLETE. Phase 5 IN PROGRESS - Common services complete (dozzle, whatsupdocker). 18 machine-specific services remaining.
 
 **Next Steps:**
-1. Phase 5: Create remaining 18 machine-specific application service roles (orac: 13, jarvis: 1, seraph: 4)
-2. Phase 6: Build orchestration playbooks (site.yml)
-3. Phase 7-9: Testing, documentation, and repo prep
-4. **THEN**: User fills secrets and deploys once
+1. Phase 3.0: Create Tailscale role for VPN management
+2. Phase 5: Create remaining 18 machine-specific application service roles (orac: 13, jarvis: 1, seraph: 4)
+3. Phase 6: Build orchestration playbooks (site.yml)
+4. Phase 7-9: Testing, documentation, and repo prep
+5. **THEN**: User fills secrets and deploys once
 
 **Important:** Secrets are filled at deployment time, not during build. The `playbooks/setup-secrets.yml` playbook generates required keys when the user is ready to deploy.
 
@@ -74,11 +76,19 @@ Migrate the existing monolithic docker-compose homelab setup to a modern Ansible
 ```
 
 ### Network Architecture
+
+**Inter-Machine Networking (Tailscale):**
+```
+Control Machine ←→ Tailscale VPN ←→ orac / jarvis / seraph
+```
+
+**Docker Networks (Per-Machine):**
 ```
 External Networks:
-- web          → Traefik + all web services
+- homelab      → Traefik + all web services (actual implementation)
 - monitoring   → Beszel hub + agents
 - internal     → Per-service internal networks (databases, etc.)
+- {hostname}_docker_socket → Docker Socket Proxy access
 ```
 
 **⚠️ IMPLEMENTATION NOTE:** Actual implementation uses `homelab` network (not `web`) to match existing production setup on orac. This is a conscious decision to minimize disruption during migration.
@@ -309,6 +319,57 @@ telegram_chat_id: "{{ vault_telegram_chat_id }}"
 ---
 
 ## Phase 3: Create Core Infrastructure Roles
+
+### 3.0 Tailscale Role 🔲 NOT STARTED
+
+**Role:** `roles/tailscale` - VPN networking layer
+
+**Purpose:** Install and configure Tailscale VPN on all machines for secure inter-machine communication.
+
+**What Needs to be Built:**
+
+1. **Tailscale Installation:**
+   - Add Tailscale package repository
+   - Install Tailscale package
+   - Start and enable tailscaled service
+
+2. **Authentication:**
+   - Support for auth key (from vault)
+   - Alternative: Support for manual authentication via URL
+   - Set machine hostname in Tailscale
+
+3. **Configuration:**
+   - Accept DNS configuration
+   - Accept routes if needed
+   - Set exit node (optional)
+   - Configure advertised tags (optional)
+
+4. **Verification:**
+   - Check Tailscale status
+   - Verify connection to Tailscale network
+   - Confirm hostname resolution
+
+**Variables Needed:**
+```yaml
+# inventory/group_vars/all/vault.yml
+vault_tailscale_auth_key: "tskey-auth-..."  # Reusable auth key
+
+# inventory/group_vars/all/vars.yml
+tailscale_accept_dns: true
+tailscale_accept_routes: true
+```
+
+**Tags:**
+- `tailscale` - All tasks
+- `tailscale-install` - Installation only
+- `tailscale-auth` - Authentication only
+- `tailscale-verify` - Verification only
+
+**Dependencies:** None (first infrastructure component)
+
+**Ready for:** Implementation
+
+---
 
 ### 3.1 Common Role ✅ COMPLETE (2025-11-02)
 

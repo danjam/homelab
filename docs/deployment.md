@@ -1,6 +1,8 @@
 # Deployment Guide
 
-## Quick Start
+⚠️ **NOTE:** This project is currently under construction. The main deployment playbook (`site.yml`) has not been created yet. This guide documents the intended deployment workflow once the build is complete.
+
+## Quick Start (When Available)
 
 Deploy everything to all machines:
 
@@ -13,11 +15,11 @@ ansible-playbook playbooks/site.yml
 ### Deploy to Specific Machine
 
 ```bash
-# Deploy only to machine1
-ansible-playbook playbooks/site.yml --limit machine1
+# Deploy only to orac
+ansible-playbook playbooks/site.yml --limit orac
 
 # Deploy to multiple specific machines
-ansible-playbook playbooks/site.yml --limit machine1,machine2
+ansible-playbook playbooks/site.yml --limit orac,jarvis
 ```
 
 ### Deploy Specific Services
@@ -26,28 +28,27 @@ ansible-playbook playbooks/site.yml --limit machine1,machine2
 # Deploy only Traefik
 ansible-playbook playbooks/site.yml --tags traefik
 
-# Deploy only Beszel
-ansible-playbook playbooks/site.yml --tags beszel
+# Deploy only dozzle
+ansible-playbook playbooks/site.yml --tags dozzle
 
 # Deploy multiple services
-ansible-playbook playbooks/site.yml --tags traefik,beszel
-```
+ansible-playbook playbooks/site.yml --tags traefik,dozzle,whatsupdocker
 
-### Service-Specific Playbooks
+# Deploy all core infrastructure
+ansible-playbook playbooks/site.yml --tags docker,common,nas
 
-```bash
-# Traefik only
-ansible-playbook playbooks/deploy-traefik.yml
-
-# Beszel only
-ansible-playbook playbooks/deploy-beszel.yml
+# Deploy all core services
+ansible-playbook playbooks/site.yml --tags docker-socket-proxy,traefik,beszel,samba
 ```
 
 ### Combine Limits and Tags
 
 ```bash
-# Deploy Traefik only to machine1
-ansible-playbook playbooks/site.yml --limit machine1 --tags traefik
+# Deploy Traefik only to orac
+ansible-playbook playbooks/site.yml --limit orac --tags traefik
+
+# Deploy core services only to jarvis
+ansible-playbook playbooks/site.yml --limit jarvis --tags traefik,dozzle,whatsupdocker
 ```
 
 ## Dry Run (Check Mode)
@@ -67,13 +68,22 @@ ansible-playbook playbooks/site.yml --check --diff
 # 1. Test connectivity
 ansible all -m ping
 
-# 2. Deploy Docker and common setup
-ansible-playbook playbooks/site.yml --tags docker,common
+# 2. Deploy core infrastructure (in order)
+ansible-playbook playbooks/site.yml --tags common
+ansible-playbook playbooks/site.yml --tags docker
+ansible-playbook playbooks/site.yml --tags nas  # orac only
 
-# 3. Deploy services
-ansible-playbook playbooks/site.yml --tags traefik,beszel
+# 3. Deploy core services (in order - dependencies matter)
+ansible-playbook playbooks/site.yml --tags docker-socket-proxy
+ansible-playbook playbooks/site.yml --tags traefik
+ansible-playbook playbooks/site.yml --tags beszel  # seraph only
+ansible-playbook playbooks/site.yml --tags beszel-agent
+ansible-playbook playbooks/site.yml --tags samba
 
-# 4. Deploy machine-specific services (example)
+# 4. Deploy common application services
+ansible-playbook playbooks/site.yml --tags dozzle,whatsupdocker
+
+# 5. Deploy machine-specific services (when roles are complete)
 ansible-playbook playbooks/site.yml --tags navidrome --limit orac
 ```
 
@@ -105,7 +115,13 @@ ansible-playbook playbooks/site.yml -v
 ansible-playbook playbooks/site.yml -vvv
 
 # Skip specific machines if one is down
-ansible-playbook playbooks/site.yml --limit '!machine2'
+ansible-playbook playbooks/site.yml --limit '!jarvis'
+
+# List all available tags
+ansible-playbook playbooks/site.yml --list-tags
+
+# List all available tasks
+ansible-playbook playbooks/site.yml --list-tasks
 ```
 
 ## Post-Deployment
@@ -116,9 +132,34 @@ After successful deployment, verify services:
 # Check if services are running on each machine
 ansible all -a "docker ps"
 
-# Check Traefik dashboard (if enabled)
-# https://traefik.yourdomain.com
+# Check Docker networks exist
+ansible all -a "docker network ls"
 
-# Check Beszel monitoring
-# https://beszel.yourdomain.com
+# Check specific service logs
+ansible all -a "docker logs traefik" --limit orac
 ```
+
+## Service URLs
+
+After deployment, services will be accessible at:
+
+**Common (all machines):**
+- `https://traefik.{hostname}.dannyjames.net` - Traefik dashboard
+- `https://dozzle.{hostname}.dannyjames.net` - Log viewer
+- `https://wud.{hostname}.dannyjames.net` - Update checker
+
+**Monitoring:**
+- `https://beszel.dannyjames.net` - Beszel hub (seraph)
+
+**Machine-specific:** See individual service roles for URLs.
+
+## Deployment Order
+
+Services have dependencies and should be deployed in this order:
+
+1. **Infrastructure:** common → docker → nas_mounts
+2. **Proxy:** docker_socket_proxy → traefik
+3. **Monitoring:** beszel (hub on seraph) → beszel_agent (all)
+4. **Services:** samba, dozzle, whatsupdocker, then application-specific
+
+The main playbook (`site.yml`) will handle this ordering automatically when complete.

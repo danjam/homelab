@@ -1,66 +1,33 @@
-# Actual Homelab Configuration
+# Configuration Guide
 
-This document contains the real configuration details for your homelab setup. Use this as reference when implementing the Ansible infrastructure.
+## Machine Configuration
 
-## Machine Details
-
-### Hostnames
-- **orac** - Machine 1
-- **jarvis** - Machine 2  
-- **seraph** - Machine 3
-
-### Network
-- **Access Method**: Tailscale VPN
-- All machines are accessible via their Tailscale hostnames
-- No need for IP addresses (Tailscale handles DNS)
-
-### SSH Access
-- **Username**: `danjam` (same on all machines)
-- **Authentication**: SSH key (assumed configured in Tailscale)
-
-### Docker Configuration
-- **Base Directory**: `/opt/homelab` (all machines)
-- Each service deployed to: `/opt/homelab/service-name/`
-- Consistent across all three machines
+### Hostnames and Access
+- **orac**, **jarvis**, **seraph**
+- Access via Tailscale VPN (hostnames resolve automatically)
+- SSH user: `danjam` (consistent across all machines)
+- Base directory: `/opt/homelab/`
 
 ### Domain Configuration
-- **Root Domain**: `dannyjames.net`
+- **Root domain**: `dannyjames.net`
 - **Timezone**: `Europe/London`
-- **User/Group IDs**: `1000:1000`
+- **User/Group**: `danjam:danjam` (1000:1000)
 
-**Machine Subdomains:**
+**Machine domains:**
 - `orac.dannyjames.net`
 - `jarvis.dannyjames.net`
 - `seraph.dannyjames.net`
 
-**Service URL Pattern:**
-- `service.machine.dannyjames.net` (e.g., `traefik.orac.dannyjames.net`)
-- `service.dannyjames.net` (e.g., `beszel.dannyjames.net` - hub on seraph)
+**Service URL pattern:**
+- `service.{machine}.dannyjames.net` (e.g., `traefik.orac.dannyjames.net`)
+- `service.dannyjames.net` (for hub services like `beszel.dannyjames.net`)
 
-### Samba Shares
-- **Purpose**: Server-only (no inter-machine mounts)
-- **Port**: 445
-- **Authentication**: Username `danjam`, password in .env
-- **orac shares**: `/opt/shares/outbox`, `/opt/homelab/www`, `/opt`, `~/Dropbox`
-- **jarvis shares**: `/opt` only
-- **seraph shares**: `/opt` only
+## Inventory Structure
 
-## Implementation Changes Needed
+### Location
+`inventory/hosts.yml` - Defines all machines
 
-### 1. Update Inventory (`inventory/hosts.yml`)
-
-Change from:
-```yaml
-all:
-  children:
-    homelab:
-      hosts:
-        machine1:
-          ansible_host: 192.168.1.10
-          ansible_user: youruser
-```
-
-To:
+### Configuration
 ```yaml
 all:
   children:
@@ -69,165 +36,188 @@ all:
         orac:
           ansible_host: orac
           ansible_user: danjam
-          
         jarvis:
           ansible_host: jarvis
           ansible_user: danjam
-          
         seraph:
           ansible_host: seraph
           ansible_user: danjam
 ```
 
-### 2. Rename Host Variables Directories
+## Variable Hierarchy
 
-Rename:
-- `host_vars/machine1/` → `host_vars/orac/`
-- `host_vars/machine2/` → `host_vars/jarvis/`
-- `host_vars/machine3/` → `host_vars/seraph/`
+### Global Variables
+`inventory/group_vars/all/vars.yml` - Shared across all machines:
+- `homelab_dir: /opt/homelab`
+- `domain_root: dannyjames.net`
+- `timezone: Europe/London`
+- `puid: 1000` / `pgid: 1000`
+- Docker network names
+- Container restart policy
 
-### 3. Update Host Variables Files
+### Host Variables
+`host_vars/{orac,jarvis,seraph}/vars.yml` - Machine-specific:
+- `hostname` - Machine hostname
+- `subdomain` - Machine subdomain
+- `domain` - Full domain (e.g., `orac.dannyjames.net`)
+- `services` - List of services to deploy
+- Service-specific variables (paths, ports, etc.)
+- NAS configuration (orac only)
+- Samba shares configuration
 
-In each `host_vars/{orac,jarvis,seraph}/vars.yml`, update:
+### Secrets
+`inventory/group_vars/all/vault.yml` - ALL secrets (encrypted):
+- Cloudflare credentials
+- API tokens
+- Service passwords
+- NAS credentials
+- Generated keys
 
+## Service Distribution
+
+### orac (19 total services)
+**Common services (6):**
+- docker-socket-proxy, traefik, beszel-agent, samba, dozzle, whatsupdocker
+
+**Unique services (13):**
+- code-server, portainer, navidrome, metube, it-tools, omni-tools, hugo, chartdb, sshwifty, chromadb, drawio
+
+**Special configuration:**
+- NAS mounts from 192.168.1.60 (MUSIC, ROMS, BACKUPS)
+- Last.fm and Spotify API for Navidrome
+- 4 Samba shares
+
+### jarvis (7 total services)
+**Common services (6):**
+- docker-socket-proxy, traefik, beszel-agent, samba, dozzle, whatsupdocker
+
+**Unique services (1):**
+- homeassistant
+
+**Special configuration:**
+- 1 Samba share
+- Telegram notifications
+
+### seraph (11 total services)
+**Common services (6):**
+- docker-socket-proxy, traefik, beszel-agent, samba, dozzle, whatsupdocker
+
+**Hub services (1):**
+- beszel (monitoring hub)
+
+**Unique services (4):**
+- adguardhome, uptime-kuma, watchyourlan, gocron
+
+**Special configuration:**
+- Hosts Beszel hub (other machines connect to it)
+- 1 Samba share
+- Telegram notifications
+- Hardcoded DNS for circular dependency
+
+## Network Architecture
+
+### External Networks
+Created by Docker role, used by all services:
+- **homelab** (172.20.0.0/16) - Web-accessible services + Traefik
+- **monitoring** (172.21.0.0/16) - Monitoring services (Beszel)
+
+### Per-Machine Networks
+- **{hostname}_docker_socket** - Bridge network for Docker Socket Proxy access
+  - Example: `orac_docker_socket`, `jarvis_docker_socket`
+  - Isolates Docker API access
+
+### Service-Specific Networks
+Some services create internal networks:
+- `{service}_internal` - For service + database communication
+
+## Storage Configuration
+
+### orac NAS Mounts
+Mounted via systemd (not fstab):
+- `/mnt/music` ← //192.168.1.60/MUSIC (for Navidrome)
+- `/mnt/roms` ← //192.168.1.60/ROMS
+- `/mnt/backups` ← //192.168.1.60/BACKUPS
+
+Credentials stored in vault, deployed securely.
+
+### Samba Shares
+Each machine exports local directories via Samba:
+
+**orac (4 shares):**
+- `/opt/shares/outbox`
+- `/opt/homelab/www`
+- `/opt`
+- `~/Dropbox`
+
+**jarvis & seraph (1 share each):**
+- `/opt`
+
+## Security Architecture
+
+### Docker Socket Security
+- **No direct socket mounts** - All services use Docker Socket Proxy
+- Docker Socket Proxy runs on isolated network
+- Read-only Docker API access
+
+### Secret Management
+- Single encrypted vault file
+- Docker secrets for sensitive data (Cloudflare, Beszel)
+- Environment variables templated from vault
+- `.ansible-vault-pass` never committed to git
+
+### HTTPS Only
+- Traefik enforces HTTPS
+- No port 80 exposed
+- Automatic Let's Encrypt certificates via Cloudflare DNS
+
+### Service Isolation
+- Each service in own docker-compose file
+- Services communicate via external networks
+- Principle of least privilege
+
+## Configuration Files
+
+### ansible.cfg
+Project-wide Ansible configuration:
+- Vault password file location
+- SSH settings
+- Collection paths
+
+### Global Variables Example
 ```yaml
-# Before
-hostname: machine1
-domain: machine1.yourdomain.com
-
-# After
-hostname: orac  # or jarvis, seraph
-domain: orac.yourdomain.com  # or jarvis.yourdomain.com, seraph.yourdomain.com
-```
-
-### 4. Update Documentation References
-
-Update all documentation that mentions:
-- "machine1/2/3" → "orac/jarvis/seraph"
-- "192.168.1.x" → Tailscale hostname
-- "youruser" → "danjam"
-
-## Tailscale Specific Notes
-
-### Advantages
-- No need to manage IP addresses
-- Built-in DNS resolution
-- Secure by default
-- Works across networks
-
-### Ansible Connection
-Ansible will use Tailscale's network automatically since hostnames resolve via Tailscale DNS.
-
-### Testing Connectivity
-```bash
-# Test Tailscale connectivity
-ping orac
-ping jarvis
-ping seraph
-
-# Test SSH access
-ssh danjam@orac
-ssh danjam@jarvis
-ssh danjam@seraph
-
-# Test Ansible connectivity
-ansible all -m ping
-```
-
-## Service Deployment Location
-
-All services on all machines deploy to:
-```
-/opt/homelab/
-├── traefik/
-│   ├── docker-compose.yml
-│   ├── config/
-│   └── certs/
-├── beszel/
-│   └── docker-compose.yml
-└── service-name/
-    └── docker-compose.yml
-```
-
-This location is already configured in `inventory/group_vars/all/vars.yml`:
-```yaml
+# inventory/group_vars/all/vars.yml
 homelab_dir: /opt/homelab
+domain_root: dannyjames.net
+timezone: Europe/London
+puid: 1000
+pgid: 1000
+docker_user: danjam
+container_restart_policy: unless-stopped
+
+# Docker networks
+docker_network_homelab: homelab
+docker_network_monitoring: monitoring
 ```
 
-## Quick Start Commands
-
-Once inventory is updated:
-
-```bash
-# Test connectivity to all machines
-ansible all -m ping
-
-# Deploy to specific machine
-ansible-playbook playbooks/site.yml --limit orac
-ansible-playbook playbooks/site.yml --limit jarvis
-ansible-playbook playbooks/site.yml --limit seraph
-
-# Deploy to all machines
-ansible-playbook playbooks/site.yml
-```
-
-## Machine Roles
-
-Define which services run on which machines in their respective `host_vars/` files:
-
-### Suggested Service Distribution
-
-**orac**:
-```yaml
-services:
-  - traefik
-  - beszel
-  # Add orac-specific services
-```
-
-**jarvis**:
-```yaml
-services:
-  - traefik
-  - beszel
-  # Add jarvis-specific services
-```
-
-**seraph**:
-```yaml
-services:
-  - traefik
-  - beszel
-  # Add seraph-specific services
-```
-
-## External Dependencies
-
-### NAS Mounts (orac only)
-
-**orac mounts external NAS from 192.168.1.60:**
-
-```bash
-# /etc/fstab entries
-//192.168.1.60/MUSIC    → /mnt/music
-//192.168.1.60/ROMS     → /mnt/roms
-//192.168.1.60/BACKUPS  → /mnt/backups
-```
-
-**Used by:** Navidrome music server (mounts /mnt/music)
-
-**Credentials:** Stored in `/home/danjam/.smbcredentials` (not in Docker)
-
-**Ansible Requirements:**
-- Install `cifs-utils` package
-- Create mount point directories
-- Deploy credentials file securely (from ansible-vault)
-- Manage `/etc/fstab` entries
-- Ensure mounts exist before Docker starts
-
-**Template Variables:**
+### Host Variables Example
 ```yaml
 # host_vars/orac/vars.yml
+hostname: orac
+subdomain: orac
+domain: "{{ subdomain }}.{{ domain_root }}"
+
+services:
+  - docker-socket-proxy
+  - traefik
+  - beszel-agent
+  - samba
+  - dozzle
+  - whatsupdocker
+  - navidrome
+  # ... more services
+
+# NAS configuration
+nas_enabled: true
 nas_ip: 192.168.1.60
 nas_mounts:
   - share: MUSIC
@@ -237,68 +227,36 @@ nas_mounts:
   - share: BACKUPS
     mount_point: /mnt/backups
 
-# vault.yml
-vault_nas_username: "username"
-vault_nas_password: "password"
+# Service-specific
+navidrome_music_path: /mnt/music
+lastfm_apikey: "{{ vault_lastfm_apikey }}"
 ```
 
-### DNS Server (seraph)
+## Modifying Configuration
 
-**seraph runs AdGuard Home (DNS server) and some containers depend on it:**
+### Adding a Service to a Machine
+1. Edit `host_vars/{machine}/vars.yml`
+2. Add service to `services` list
+3. Add any service-specific variables
+4. Add secrets to vault if needed
+5. Deploy with `--tags servicename`
 
-```yaml
-# Hardcoded in docker-compose.yml
-dns:
-  - 192.168.1.1  # Should be templated as variable
+### Changing Global Settings
+Edit `inventory/group_vars/all/vars.yml` - affects all machines.
+
+### Adding Secrets
+```bash
+ansible-vault edit inventory/group_vars/all/vault.yml
 ```
 
-**Containers affected:**
-- beszel-agent (uses network_mode: host)
-- watchyourlan (uses network_mode: host)
+### Changing Machine-Specific Settings
+Edit `host_vars/{orac,jarvis,seraph}/vars.yml` - affects only that machine.
 
-**Reason:** Circular dependency - can't use AdGuard Home for DNS while starting it
+## Best Practices
 
-**Ansible Consideration:** Template the DNS IP as a variable
-
-## Security Concerns Found
-
-⚠️ **Current security issues to address during migration:**
-
-1. **Plaintext passwords in .env files:**
-   - `DEFAULT_PASSWORD=M00seontheL00se` (visible on all machines)
-   - Samba, some service authentications use this
-   
-2. **API tokens in .env (not Docker secrets):**
-   - Telegram bot tokens on jarvis and seraph
-   - Last.fm and Spotify API keys on orac
-   
-3. **Mixed secret storage:**
-   - Cloudflare: ✅ Docker secrets
-   - Beszel: ✅ Docker secrets
-   - Telegram: ❌ .env plaintext
-   - Service passwords: ❌ .env plaintext
-
-**Recommendation:** Move all secrets to ansible-vault and deploy as Docker secrets.
-
-## Architecture Notes
-
-**Current Setup:**
-- Monolithic docker-compose.yml (all services in one file)
-- Single `homelab` Docker network (not separated web/monitoring)
-- HTTPS only (no port 80 exposed)
-- Docker secrets used for Cloudflare and Beszel
-- Traefik uses external config files (not inline)
-
-**Migration Decision:**
-- Keep monolithic structure (minimal disruption to working setup)
-- Template docker-compose.yml with Jinja2 for per-machine service differences
-- Maintain current network architecture (single homelab network)
-- Standardize all secrets on Docker secrets (not .env)
-
-## Notes
-
-- Tailscale hostnames are already configured to work with Ansible
-- No additional network configuration needed
-- SSH keys should already be working via Tailscale
-- The `/opt/homelab` directory will be created by Ansible if it doesn't exist
-- No cross-machine dependencies (machines are self-contained)
+1. **Use variables, not hardcoded values** - Everything should be templatable
+2. **Document defaults** - Use `defaults/main.yml` in roles
+3. **Single source of truth** - Variables in host_vars, secrets in vault
+4. **Test with --check** - Dry run before deploying
+5. **Use tags** - For selective deployment
+6. **Keep secrets in vault** - Never in plaintext files

@@ -17,9 +17,6 @@ Homelab infrastructure using Ansible to deploy Docker Compose stacks across thre
 - Combine sources for accuracy
 
 **Current Work**
-- Phase 3 COMPLETE (Common, Docker, NAS mounts)
-- Phase 4 COMPLETE (Docker Socket Proxy, Traefik, Beszel, Samba)
-- Next: Phase 5 - Application service roles (18+ services)
 - See `PLAN.md` for overall progress
 
 ---
@@ -48,41 +45,6 @@ Homelab infrastructure using Ansible to deploy Docker Compose stacks across thre
 - Timezone: `Europe/London`
 - Directory: `/opt/homelab/`
 - Networks: `homelab` (external), `monitoring` (external)
-
----
-
-## Architecture
-
-### Directory Structure
-```
-homelab/
-├── inventory/
-│   ├── hosts.yml
-│   └── group_vars/all/
-│       ├── vars.yml
-│       └── vault.yml (encrypted - single vault for all secrets)
-├── host_vars/
-│   ├── orac/vars.yml
-│   ├── jarvis/vars.yml
-│   └── seraph/vars.yml
-├── roles/
-│   └── [service roles]
-├── playbooks/
-│   ├── setup-secrets.yml
-│   └── site.yml
-└── docs/
-```
-
-### Secret Management
-- Single vault file: `inventory/group_vars/all/vault.yml` (encrypted)
-- `.ansible-vault-pass` contains password (not in repo)
-- `.secrets/` for generated keys (not in repo)
-- `playbooks/setup-secrets.yml` auto-generates Beszel ED25519 keypair
-
-### Secrets to Fill (at deployment)
-All in `inventory/group_vars/all/vault.yml`:
-- Auto-generated: Beszel ED25519 keypair
-- User provides: Cloudflare, Telegram, passwords, Last.fm/Spotify APIs, NAS credentials
 
 ---
 
@@ -116,3 +78,20 @@ ansible-playbook playbooks/site.yml --check --diff
 - PLAN.md has progress tracking
 - CONTINUATION.md has current work
 - Don't create extra documentation files unnecessarily
+
+## Documentation
+
+**Start here:** [README.md](README.md) - Project overview and current status
+
+**Planning & Progress:**
+- PLAN.md - Detailed phase-by-phase implementation plan
+- CONTINUATION.md - Current work and immediate next steps
+
+**Guides (in docs/):**
+- `docs/setup.md` - Initial setup and prerequisites
+- `docs/secrets.md` - Secret management workflow
+- `docs/deployment.md` - Deployment commands and workflows
+- `docs/configuration.md` - Variable hierarchy and machine config
+- `docs/adding-services.md` - Adding new service roles
+
+**Note:** All docs have been updated to reflect current architecture (Docker Socket Proxy, single vault, Tailscale networking).
