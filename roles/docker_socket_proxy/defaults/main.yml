@@ -1,0 +1,41 @@
+---
+# Docker Socket Proxy role defaults
+
+# Docker image
+docker_socket_proxy_image: "ghcr.io/linuxserver/socket-proxy:latest"
+
+# Network configuration
+docker_socket_proxy_port: 2375
+docker_socket_proxy_network: "{{ hostname }}_docker_socket"
+
+# Permissions - what APIs to expose
+# Set to 1 to enable, 0 to disable
+docker_socket_proxy_containers: 1
+docker_socket_proxy_images: 0
+docker_socket_proxy_info: 0
+docker_socket_proxy_networks: 0
+docker_socket_proxy_services: 0
+docker_socket_proxy_tasks: 0
+docker_socket_proxy_volumes: 0
+docker_socket_proxy_events: 0
+docker_socket_proxy_auth: 0
+docker_socket_proxy_secrets: 0
+docker_socket_proxy_post: 0
+docker_socket_proxy_build: 0
+docker_socket_proxy_commit: 0
+docker_socket_proxy_configs: 0
+docker_socket_proxy_distribution: 0
+docker_socket_proxy_exec: 0
+docker_socket_proxy_grpc: 0
+docker_socket_proxy_nodes: 0
+docker_socket_proxy_plugins: 0
+docker_socket_proxy_session: 0
+docker_socket_proxy_swarm: 0
+docker_socket_proxy_system: 0
+docker_socket_proxy_version: 0
+
+# Directory paths
+docker_socket_proxy_dir: "{{ homelab_dir }}/docker-socket-proxy"
+
+# Container restart policy
+container_restart_policy: unless-stopped

@@ -1,0 +1,30 @@
+---
+# Beszel Agent - System Monitoring
+# Deployed via Ansible on {{ ansible_hostname }}
+
+services:
+  beszel-agent:
+    image: {{ beszel_agent_image }}:{{ beszel_agent_image_tag }}
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+{% if beszel_agent_dns_servers | length > 0 %}
+    dns:
+{% for dns in beszel_agent_dns_servers %}
+      - {{ dns }}
+{% endfor %}
+{% endif %}
+    volumes:
+      - {{ beszel_agent_docker_socket }}:{{ beszel_agent_docker_socket }}:ro
+    environment:
+      PORT: {{ beszel_agent_port }}
+      KEY_FILE: /run/secrets/beszel_agent_key
+{% for key, value in beszel_agent_extra_env.items() %}
+      {{ key }}: {{ value }}
+{% endfor %}
+    secrets:
+      - beszel_agent_key
+
+secrets:
+  beszel_agent_key:
+    file: {{ beszel_agent_base_dir }}/secrets/beszel_agent_key

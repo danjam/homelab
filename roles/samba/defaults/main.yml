@@ -1,0 +1,30 @@
+---
+# Default variables for Samba role
+
+# Service directory
+samba_service_dir: "{{ homelab_dir }}/samba"
+
+# Container image
+samba_image: "ghcr.io/servercontainers/samba:latest"
+
+# Container restart policy
+samba_restart_policy: "{{ container_restart_policy | default('unless-stopped') }}"
+
+# Samba port
+samba_port: 445
+
+# Samba shares configuration
+# Each share should have:
+#   - local_path: path on host to share
+#   - share_name: name of the share
+#   - browseable: whether the share is browseable (optional, default: yes for most)
+#   - writable: whether the share is writable (optional, default: yes)
+samba_shares: []
+
+# Default Samba global stanza
+samba_global_stanza: |
+  available = yes
+  browseable = yes
+  public = no
+  writable = no
+  valid users = {{ default_username }}

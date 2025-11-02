@@ -1,0 +1,7 @@
+---
+# Beszel Hub handlers
+
+- name: Restart beszel
+  community.docker.docker_compose_v2:
+    project_src: "{{ beszel_base_dir }}/beszel"
+    state: restarted

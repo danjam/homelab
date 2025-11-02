@@ -1,0 +1,14 @@
+---
+# Deploy only Traefik reverse proxy
+# Usage: ansible-playbook playbooks/deploy-traefik.yml
+
+- name: Deploy Traefik
+  hosts: homelab
+  become: true
+  
+  roles:
+    - role: common
+      tags: ['common']
+    
+    - role: traefik
+      when: "'traefik' in services"

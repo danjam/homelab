@@ -1,0 +1,15 @@
+---
+# Variables specific to the homelab group
+# These apply to all machines in the homelab group
+
+# Default services for homelab machines
+default_services:
+  - traefik
+  - beszel
+
+# Restart policy for containers
+container_restart_policy: unless-stopped
+
+# Update behavior
+auto_pull_images: true
+recreate_containers: false

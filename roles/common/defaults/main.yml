@@ -1,0 +1,22 @@
+---
+# Default variables for common role
+
+# Base packages to install on all machines
+common_packages:
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - tree
+  - net-tools
+  - dnsutils
+  - jq
+  - unzip
+  - ca-certificates
+  - gnupg
+  - lsb-release
+
+# Update scripts to deploy
+deploy_update_scripts: true
+update_scripts_dir: /usr/local/bin

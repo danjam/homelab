@@ -1,0 +1,13 @@
+[Unit]
+Description=Mount NAS share {{ item.share }} to {{ item.mount_point }}
+After=network-online.target
+Wants=network-online.target
+
+[Mount]
+What=//{{ nas_ip }}/{{ item.share }}
+Where={{ item.mount_point }}
+Type=cifs
+Options=credentials={{ nas_credentials_file }},uid={{ puid }},gid={{ pgid }},iocharset=utf8,file_mode=0755,dir_mode=0755,nofail,x-systemd.automount
+
+[Install]
+WantedBy=multi-user.target

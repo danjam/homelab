@@ -1,0 +1,29 @@
+---
+# Global variables for all homelab machines
+
+# Common configuration
+homelab_dir: /opt/homelab
+docker_user: danjam
+puid: 1000
+pgid: 1000
+timezone: Europe/London
+domain_root: dannyjames.net
+container_restart_policy: unless-stopped
+
+# Docker networks (external)
+docker_networks:
+  - name: homelab
+    driver: bridge
+  - name: monitoring
+    driver: bridge
+
+# Common paths
+secrets_base_path: "{{ homelab_dir }}/secrets"
+
+# Cloudflare (for Traefik)
+cloudflare_email: "{{ vault_cloudflare_email }}"
+cloudflare_dns_token: "{{ vault_cloudflare_dns_token }}"
+
+# Default credentials
+default_username: danjam
+default_password: "{{ vault_default_password }}"

@@ -1,0 +1,23 @@
+---
+# Beszel Agent - System Monitoring Agent
+# Sends system metrics to Beszel hub
+
+# Docker image
+beszel_agent_image: henrygd/beszel-agent
+beszel_agent_image_tag: latest
+
+# Agent configuration
+beszel_agent_port: 45876
+
+# Docker socket access (read-only for metrics)
+beszel_agent_docker_socket: /var/run/docker.sock
+
+# Directory paths (using shared homelab structure)
+beszel_agent_base_dir: /opt/homelab
+
+# DNS servers (optional, empty by default)
+# Example: beszel_agent_dns_servers: ["192.168.1.1"]
+beszel_agent_dns_servers: []
+
+# Environment variables to pass through
+beszel_agent_extra_env: {}

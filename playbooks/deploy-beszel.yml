@@ -1,0 +1,14 @@
+---
+# Deploy only Beszel monitoring agent
+# Usage: ansible-playbook playbooks/deploy-beszel.yml
+
+- name: Deploy Beszel
+  hosts: homelab
+  become: true
+  
+  roles:
+    - role: common
+      tags: ['common']
+    
+    - role: beszel
+      when: "'beszel' in services"

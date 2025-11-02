@@ -1,0 +1,44 @@
+# Environment files with secrets
+.env
+*.env
+!*.env.example
+
+# Ansible vault password
+.ansible-vault-pass
+*.vault-pass
+
+# Generated secrets directory
+.secrets/
+
+# Ansible retry files
+*.retry
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak

@@ -1,0 +1,10 @@
+[Unit]
+Description=Automount NAS share {{ item.share }} to {{ item.mount_point }}
+After=network-online.target
+
+[Automount]
+Where={{ item.mount_point }}
+TimeoutIdleSec=300
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,29 @@
+---
+# Beszel Hub - Monitoring Dashboard
+# Collects metrics from Beszel agents
+
+# Docker image
+beszel_image: henrygd/beszel
+beszel_image_tag: latest
+
+# Hub configuration
+beszel_port: 8090
+beszel_domain: "beszel.{{ domain_root }}"
+
+# Directory paths (using shared homelab structure)
+beszel_base_dir: /opt/homelab
+beszel_data_dir: "{{ beszel_base_dir }}/data/beszel"
+
+# Docker network
+beszel_network: homelab
+
+# Traefik integration
+beszel_enable_traefik: true
+beszel_traefik_entrypoint: websecure
+beszel_traefik_certresolver: letsencrypt
+
+# Optional: Disable password authentication
+# beszel_disable_password_auth: false
+
+# Environment variables to pass through
+beszel_extra_env: {}

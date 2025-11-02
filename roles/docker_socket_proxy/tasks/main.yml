@@ -1,0 +1,39 @@
+---
+# Docker Socket Proxy role tasks
+
+- name: Create Docker Socket Proxy directory
+  ansible.builtin.file:
+    path: "{{ docker_socket_proxy_dir }}"
+    state: directory
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: '0755'
+
+- name: Create Docker Socket Proxy internal network
+  community.docker.docker_network:
+    name: "{{ docker_socket_proxy_network }}"
+    driver: bridge
+    state: present
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ docker_socket_proxy_dir }}/docker-compose.yml"
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: '0644'
+  notify: restart docker-socket-proxy
+
+- name: Start Docker Socket Proxy
+  community.docker.docker_compose_v2:
+    project_src: "{{ docker_socket_proxy_dir }}"
+    state: present
+    pull: "{{ auto_pull_images | default('missing') }}"
+
+- name: Wait for Docker Socket Proxy to be ready
+  ansible.builtin.wait_for:
+    host: localhost
+    port: "{{ docker_socket_proxy_port }}"
+    delay: 2
+    timeout: 30
+  when: docker_socket_proxy_network != "host"

@@ -1,0 +1,42 @@
+---
+# seraph specific configuration
+
+hostname: seraph
+subdomain: seraph
+domain: "{{ subdomain }}.{{ domain_root }}"
+
+# Services to deploy
+services:
+  - adguardhome
+  - docker-socket-proxy
+  - traefik
+  - beszel
+  - beszel-agent
+  - samba
+  - dozzle
+  - uptime-kuma
+  - watchyourlan
+  - whatsupdocker
+  - gocron
+
+# DNS configuration
+local_dns_server: 192.168.1.1
+
+# NAS mounts
+nas_enabled: true
+nas_ip: 192.168.1.60
+nas_mounts:
+  - share: BACKUPS
+    mount_point: /mnt/backups
+
+# Samba shares
+samba_shares:
+  - local_path: /opt
+    share_name: opt
+
+# Beszel hub
+beszel_hub_domain: beszel.{{ domain_root }}
+
+# Telegram notifications
+telegram_bot_token: "{{ vault_telegram_bot_token }}"
+telegram_chat_id: "{{ vault_telegram_chat_id }}"

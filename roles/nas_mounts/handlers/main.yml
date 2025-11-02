@@ -1,0 +1,12 @@
+---
+# Handlers for nas_mounts role
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+- name: Remount all NAS shares
+  ansible.builtin.command: "mount -a"
+  become: true
+  ignore_errors: true

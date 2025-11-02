@@ -1,0 +1,17 @@
+---
+# Default variables for nas_mounts role
+
+# NAS mount configuration (override in host_vars)
+nas_enabled: false
+nas_ip: ""
+nas_mounts: []
+
+# SMB credentials from vault
+nas_username: "{{ vault_nas_username }}"
+nas_password: "{{ vault_nas_password }}"
+
+# Mount options
+nas_mount_options: "credentials=/root/.smbcredentials,uid={{ puid }},gid={{ pgid }},iocharset=utf8,file_mode=0775,dir_mode=0775"
+
+# Credentials file path
+nas_credentials_file: /root/.smbcredentials

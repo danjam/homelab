@@ -1,0 +1,118 @@
+---
+# Main tasks for nas_mounts role
+
+- name: Skip NAS mounts when nas_enabled is false
+  ansible.builtin.debug:
+    msg: "NAS mounting disabled for {{ hostname }}, skipping..."
+  when: not nas_enabled | default(false)
+
+- name: Execute NAS mount tasks
+  when: nas_enabled | default(false)
+  block:
+    - name: Install CIFS utilities
+      ansible.builtin.apt:
+        name: cifs-utils
+        state: present
+        update_cache: true
+      become: true
+      tags: ['nas', 'nas-install']
+
+    - name: Create NAS mount point directories
+      ansible.builtin.file:
+        path: "{{ item.mount_point }}"
+        state: directory
+        owner: "{{ homelab_user }}"
+        group: "{{ homelab_user }}"
+        mode: '0755'
+      loop: "{{ nas_mounts }}"
+      become: true
+      tags: ['nas', 'nas-dirs']
+
+    - name: Deploy SMB credentials file
+      ansible.builtin.template:
+        src: smbcredentials.j2
+        dest: "{{ nas_credentials_file }}"
+        owner: root
+        group: root
+        mode: '0600'
+      become: true
+      no_log: true
+      tags: ['nas', 'nas-credentials']
+
+    - name: Create systemd mount unit for each NAS share
+      ansible.builtin.template:
+        src: nas-mount.mount.j2
+        dest: "/etc/systemd/system/{{ item.mount_point[1:] | replace('/', '-') }}.mount"
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ nas_mounts }}"
+      become: true
+      notify: Reload systemd
+      tags: ['nas', 'nas-systemd']
+
+    - name: Create systemd automount unit for each NAS share
+      ansible.builtin.template:
+        src: nas-mount.automount.j2
+        dest: "/etc/systemd/system/{{ item.mount_point[1:] | replace('/', '-') }}.automount"
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ nas_mounts }}"
+      become: true
+      notify: Reload systemd
+      tags: ['nas', 'nas-systemd']
+
+    - name: Flush handlers to reload systemd
+      ansible.builtin.meta: flush_handlers
+
+    - name: Enable and start systemd mount units
+      ansible.builtin.systemd:
+        name: "{{ item.mount_point[1:] | replace('/', '-') }}.mount"
+        enabled: true
+        state: started
+      loop: "{{ nas_mounts }}"
+      become: true
+      tags: ['nas', 'nas-mount']
+
+    - name: Enable and start systemd automount units
+      ansible.builtin.systemd:
+        name: "{{ item.mount_point[1:] | replace('/', '-') }}.automount"
+        enabled: true
+        state: started
+      loop: "{{ nas_mounts }}"
+      become: true
+      tags: ['nas', 'nas-mount']
+
+    - name: Wait for mounts to be ready
+      ansible.builtin.wait_for:
+        path: "{{ item.mount_point }}"
+        state: present
+        timeout: 30
+      loop: "{{ nas_mounts }}"
+      tags: ['nas', 'nas-verify']
+
+    - name: Verify NAS mounts are active
+      ansible.builtin.command: "mountpoint -q {{ item.mount_point }}"
+      register: mount_check
+      changed_when: false
+      failed_when: false
+      loop: "{{ nas_mounts }}"
+      tags: ['nas', 'nas-verify']
+
+    - name: Display mount status
+      ansible.builtin.debug:
+        msg: "{{ item.item.mount_point }} is {{ 'mounted' if item.rc == 0 else 'NOT MOUNTED' }}"
+      loop: "{{ mount_check.results }}"
+      tags: ['nas', 'nas-verify']
+
+    - name: List all mounts
+      ansible.builtin.command: "df -h"
+      register: df_output
+      changed_when: false
+      tags: ['nas', 'nas-verify']
+
+    - name: Display filesystem usage
+      ansible.builtin.debug:
+        msg: "{{ df_output.stdout_lines }}"
+      tags: ['nas', 'nas-verify']

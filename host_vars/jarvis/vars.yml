@@ -1,0 +1,32 @@
+---
+# jarvis specific configuration
+
+hostname: jarvis
+subdomain: jarvis
+domain: "{{ subdomain }}.{{ domain_root }}"
+
+# Services to deploy
+services:
+  - docker-socket-proxy
+  - traefik
+  - beszel-agent
+  - samba
+  - dozzle
+  - whatsupdocker
+  - homeassistant
+
+# NAS mounts
+nas_enabled: true
+nas_ip: 192.168.1.60
+nas_mounts:
+  - share: BACKUPS
+    mount_point: /mnt/backups
+
+# Samba shares
+samba_shares:
+  - local_path: /opt
+    share_name: opt
+
+# Telegram notifications
+telegram_bot_token: "{{ vault_telegram_bot_token }}"
+telegram_chat_id: "{{ vault_telegram_chat_id }}"

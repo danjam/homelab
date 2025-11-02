@@ -1,0 +1,35 @@
+---
+# Beszel Hub - Monitoring Dashboard
+# Deployed via Ansible on {{ ansible_hostname }}
+
+services:
+  beszel:
+    image: {{ beszel_image }}:{{ beszel_image_tag }}
+    container_name: beszel
+    restart: unless-stopped
+    expose:
+      - {{ beszel_port }}
+    volumes:
+      - {{ beszel_data_dir }}:/beszel_data
+    networks:
+      - {{ beszel_network }}
+{% if beszel_disable_password_auth is defined and beszel_disable_password_auth %}
+    environment:
+      DISABLE_PASSWORD_AUTH: "true"
+{% for key, value in beszel_extra_env.items() %}
+      {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+{% if beszel_enable_traefik %}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.beszel.entrypoints: {{ beszel_traefik_entrypoint }}
+      traefik.http.routers.beszel.rule: Host(`{{ beszel_domain }}`)
+      traefik.http.routers.beszel.tls: "true"
+      traefik.http.routers.beszel.tls.certresolver: {{ beszel_traefik_certresolver }}
+      traefik.http.services.beszel.loadbalancer.server.port: {{ beszel_port }}
+{% endif %}
+
+networks:
+  {{ beszel_network }}:
+    external: true

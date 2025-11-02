@@ -1,0 +1,27 @@
+services:
+  samba:
+    image: {{ samba_image }}
+    container_name: samba
+    restart: {{ samba_restart_policy }}
+    ports:
+      - "{{ samba_port }}:445"
+    volumes:
+{% for share in samba_shares %}
+      - {{ share.local_path }}:/shares/{{ share.share_name }}
+{% endfor %}
+    environment:
+      ACCOUNT_{{ default_username }}: ${DEFAULT_PASSWORD}
+      UID_{{ default_username }}: ${DOCKER_PUID}
+      SAMBA_GLOBAL_STANZA: |
+        {{ samba_global_stanza | indent(8) }}
+{% for share in samba_shares %}
+      SAMBA_VOLUME_CONFIG_{{ share.share_name }}: |
+        [{{ share.share_name }}]
+        path = /shares/{{ share.share_name }}
+{% if share.browseable is defined %}
+        browseable = {{ 'yes' if share.browseable else 'no' }}
+{% endif %}
+        writable = {{ 'yes' if share.writable | default(true) else 'no' }}
+{% endfor %}
+    labels:
+      traefik.enable: false

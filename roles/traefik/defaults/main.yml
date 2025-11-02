@@ -1,0 +1,37 @@
+---
+# Traefik role defaults
+
+# Docker image
+traefik_image: "traefik:latest"
+
+# Traefik configuration
+traefik_dashboard_enabled: true
+traefik_log_level: INFO
+traefik_api_insecure: false
+traefik_api_debug: false
+
+# Paths
+traefik_dir: "{{ homelab_dir }}/traefik"
+traefik_config_dir: "{{ homelab_dir }}/config/traefik"
+traefik_data_dir: "{{ homelab_dir }}/data/traefik"
+traefik_logs_dir: "{{ homelab_dir }}/logs/traefik"
+traefik_secrets_dir: "{{ homelab_dir }}/secrets"
+
+# Network
+traefik_network: homelab
+
+# Certificate resolver
+traefik_cert_resolver: letsencrypt
+traefik_acme_server: "https://acme-v02.api.letsencrypt.org/directory"  # production
+# traefik_acme_server: "https://acme-staging-v02.api.letsencrypt.org/directory"  # staging
+
+# TLS settings
+traefik_tls_min_version: "VersionTLS12"
+traefik_tls_max_version: "VersionTLS13"
+traefik_tls_sni_strict: true
+
+# Docker Socket Proxy connection
+docker_socket_proxy_endpoint: "tcp://docker-socket-proxy:2375"
+
+# Container restart policy
+container_restart_policy: unless-stopped

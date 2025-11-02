@@ -1,0 +1,30 @@
+---
+# Main deployment playbook for homelab infrastructure
+# Usage: ansible-playbook playbooks/site.yml
+
+- name: Deploy Homelab Infrastructure
+  hosts: homelab
+  become: true
+  
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+      tags: ['always']
+
+  roles:
+    - role: docker
+      tags: ['docker']
+    
+    - role: common
+      tags: ['common']
+    
+    - role: traefik
+      when: "'traefik' in services"
+      tags: ['traefik']
+    
+    - role: beszel
+      when: "'beszel' in services"
+      tags: ['beszel']

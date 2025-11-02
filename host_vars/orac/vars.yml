@@ -1,0 +1,55 @@
+---
+# orac specific configuration
+
+hostname: orac
+subdomain: orac
+domain: "{{ subdomain }}.{{ domain_root }}"
+
+# Services to deploy
+services:
+  - docker-socket-proxy
+  - traefik
+  - beszel-agent
+  - code-server
+  - samba
+  - dozzle
+  - metube
+  - it-tools
+  - omni-tools
+  - hugo
+  - chartdb
+  - sshwifty
+  - chromadb
+  - drawio
+  - whatsupdocker
+  - navidrome
+  - portainer
+
+# NAS mounts
+nas_enabled: true
+nas_ip: 192.168.1.60
+nas_mounts:
+  - share: MUSIC
+    mount_point: /mnt/music
+  - share: ROMS
+    mount_point: /mnt/roms
+  - share: BACKUPS
+    mount_point: /mnt/backups
+
+# Samba shares
+samba_shares:
+  - local_path: /opt/shares/outbox
+    share_name: outbox
+  - local_path: /opt/homelab/www
+    share_name: www
+  - local_path: /opt
+    share_name: opt
+  - local_path: ~/Dropbox
+    share_name: dropbox
+
+# Service-specific variables
+navidrome_music_path: /mnt/music
+lastfm_apikey: "{{ vault_lastfm_apikey }}"
+lastfm_secret: "{{ vault_lastfm_secret }}"
+spotify_id: "{{ vault_spotify_id }}"
+spotify_secret: "{{ vault_spotify_secret }}"

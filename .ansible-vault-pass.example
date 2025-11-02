@@ -1,0 +1,18 @@
+# This is an example vault password file
+# 
+# To use ansible-vault with this project:
+# 1. Copy this file: cp .ansible-vault-pass.example ~/.ansible-vault-pass
+# 2. Edit it and replace this text with your actual strong password
+# 3. Set permissions: chmod 600 ~/.ansible-vault-pass
+#
+# Your actual password should be:
+# - At least 20 characters long
+# - Random and unique
+# - NOT committed to git (it's in .gitignore)
+#
+# Example of generating a strong password:
+# openssl rand -base64 32
+#
+# Replace this entire file content with just your password (no comments needed)
+
+your-secure-vault-password-here

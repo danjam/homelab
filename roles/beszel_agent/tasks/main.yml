@@ -1,0 +1,27 @@
+---
+# Beszel Agent - Deploy monitoring agent
+
+- name: Create beszel_agent directory
+  ansible.builtin.file:
+    path: "{{ beszel_agent_base_dir }}/beszel_agent"
+    state: directory
+    mode: '0755'
+
+- name: Create Docker secret for agent key
+  ansible.builtin.copy:
+    content: "{{ vault_beszel_hub_public_key }}"
+    dest: "{{ beszel_agent_base_dir }}/secrets/beszel_agent_key"
+    mode: '0600'
+  notify: Restart beszel_agent
+
+- name: Template docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ beszel_agent_base_dir }}/beszel_agent/docker-compose.yml"
+    mode: '0644'
+  notify: Restart beszel_agent
+
+- name: Start beszel_agent
+  community.docker.docker_compose_v2:
+    project_src: "{{ beszel_agent_base_dir }}/beszel_agent"
+    state: present

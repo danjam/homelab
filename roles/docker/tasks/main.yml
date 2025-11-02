@@ -1,0 +1,134 @@
+---
+# Main tasks for docker role
+
+- name: Install prerequisites for Docker
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+    update_cache: true
+  become: true
+  tags: ['docker', 'docker-install']
+
+- name: Create directory for Docker GPG key
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: true
+  tags: ['docker', 'docker-install']
+
+- name: Add Docker GPG key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    keyring: /etc/apt/keyrings/docker.gpg
+    state: present
+  become: true
+  tags: ['docker', 'docker-install']
+
+- name: Get Ubuntu release codename
+  ansible.builtin.command: lsb_release -cs
+  register: ubuntu_release
+  changed_when: false
+  tags: ['docker', 'docker-install']
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ubuntu_release.stdout }} stable"
+    state: present
+    filename: docker
+  become: true
+  tags: ['docker', 'docker-install']
+
+- name: Install Docker packages
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: "{{ docker_package_state }}"
+    update_cache: true
+  become: true
+  notify: Restart docker
+  tags: ['docker', 'docker-install']
+
+- name: Create Docker configuration directory
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: '0755'
+  become: true
+  tags: ['docker', 'docker-config']
+
+- name: Deploy Docker daemon configuration
+  ansible.builtin.template:
+    src: daemon.json.j2
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: Restart docker
+  tags: ['docker', 'docker-config']
+
+- name: Add users to docker group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users }}"
+  become: true
+  tags: ['docker', 'docker-users']
+
+- name: Enable and start Docker service
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+  become: true
+  tags: ['docker', 'docker-service']
+
+- name: Ensure Docker is running before creating networks
+  ansible.builtin.wait_for:
+    path: /var/run/docker.sock
+    state: present
+    timeout: 30
+  tags: ['docker', 'docker-networks']
+
+- name: Create external Docker networks
+  community.docker.docker_network:
+    name: "{{ item.name }}"
+    driver: "{{ item.driver }}"
+    ipam_config:
+      - subnet: "{{ item.subnet }}"
+    state: present
+  loop: "{{ docker_networks }}"
+  become: true
+  tags: ['docker', 'docker-networks']
+
+- name: Verify Docker installation
+  ansible.builtin.command: docker --version
+  register: docker_version
+  changed_when: false
+  tags: ['docker', 'docker-verify']
+
+- name: Display Docker version
+  ansible.builtin.debug:
+    msg: "Docker installed: {{ docker_version.stdout }}"
+  tags: ['docker', 'docker-verify']
+
+- name: Verify Docker Compose plugin
+  ansible.builtin.command: docker compose version
+  register: compose_version
+  changed_when: false
+  tags: ['docker', 'docker-verify']
+
+- name: Display Docker Compose version
+  ansible.builtin.debug:
+    msg: "Docker Compose installed: {{ compose_version.stdout }}"
+  tags: ['docker', 'docker-verify']

@@ -1,0 +1,7 @@
+---
+# Beszel Agent handlers
+
+- name: Restart beszel_agent
+  community.docker.docker_compose_v2:
+    project_src: "{{ beszel_agent_base_dir }}/beszel_agent"
+    state: restarted

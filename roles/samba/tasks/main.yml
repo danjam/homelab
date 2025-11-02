@@ -1,0 +1,57 @@
+---
+# Tasks for Samba role
+
+- name: Create Samba service directory
+  ansible.builtin.file:
+    path: "{{ samba_service_dir }}"
+    state: directory
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: '0755'
+
+- name: Create shared directories (if they don't exist)
+  ansible.builtin.file:
+    path: "{{ item.local_path }}"
+    state: directory
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: '0755'
+  loop: "{{ samba_shares }}"
+  when: 
+    - item.local_path is defined
+    - not item.local_path.startswith('~')  # Skip home directory paths
+
+- name: Deploy Samba docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ samba_service_dir }}/docker-compose.yml"
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: '0644'
+  notify: Restart Samba
+
+- name: Deploy Samba .env file
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ samba_service_dir }}/.env"
+    owner: "{{ docker_user }}"
+    group: "{{ docker_user }}"
+    mode: '0600'  # More restrictive for credentials
+
+- name: Start Samba service
+  community.docker.docker_compose_v2:
+    project_src: "{{ samba_service_dir }}"
+    state: present
+  register: samba_output
+
+- name: Verify Samba container is running
+  community.docker.docker_container_info:
+    name: samba
+  register: samba_container_info
+  failed_when: 
+    - samba_container_info.exists == false
+    - samba_container_info.container.State.Running == false
+
+- name: Display Samba status
+  ansible.builtin.debug:
+    msg: "Samba is {{ 'running' if samba_container_info.container.State.Running else 'not running' }}"

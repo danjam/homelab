@@ -1,0 +1,27 @@
+---
+# Default variables for docker role
+
+# Docker version (use 'latest' for most recent stable)
+docker_edition: ce
+docker_package_state: present
+
+# Docker daemon configuration
+docker_daemon_options:
+  log-driver: "json-file"
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+  storage-driver: "overlay2"
+
+# External networks to create
+docker_networks:
+  - name: homelab
+    subnet: 172.20.0.0/16
+    driver: bridge
+  - name: monitoring
+    subnet: 172.21.0.0/16
+    driver: bridge
+
+# User to add to docker group (from global vars)
+docker_users:
+  - "{{ homelab_user }}"
