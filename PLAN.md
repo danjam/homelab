@@ -631,7 +631,7 @@ services:
   docker-socket-proxy:
     image: ghcr.io/linuxserver/socket-proxy:latest
     container_name: docker-socket-proxy
-    restart: {{ container_restart_policy }}
+    restart: {{ default_container_restart_policy }}
     environment:
       - CONTAINERS=1
       - INFO=1
@@ -663,7 +663,7 @@ services:
   traefik:
     image: traefik:latest
     container_name: traefik
-    restart: {{ container_restart_policy }}
+    restart: {{ default_container_restart_policy }}
     ports:
       - "443:443"
     environment:
@@ -717,7 +717,7 @@ services:
   beszel-agent:
     image: henrygd/beszel-agent
     container_name: beszel-agent
-    restart: {{ container_restart_policy }}
+    restart: {{ default_container_restart_policy }}
     network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -732,7 +732,7 @@ services:
   beszel:
     image: henrygd/beszel
     container_name: beszel
-    restart: {{ container_restart_policy }}
+    restart: {{ default_container_restart_policy }}
     volumes:
       - ./data:/data
     networks:
@@ -795,7 +795,7 @@ services:
   samba:
     image: ghcr.io/servercontainers/samba:latest
     container_name: samba
-    restart: {{ container_restart_policy }}
+    restart: {{ default_container_restart_policy }}
     ports:
       - "445:445"
     environment:

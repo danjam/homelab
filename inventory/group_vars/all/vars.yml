@@ -8,7 +8,9 @@ puid: 1000
 pgid: 1000
 timezone: Europe/London
 domain_root: dannyjames.net
-container_restart_policy: unless-stopped
+nas_ip: 192.168.1.60
+ansible_user: danjam
+default_container_restart_policy: unless-stopped
 
 # Docker networks (external)
 docker_networks:

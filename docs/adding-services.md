@@ -74,7 +74,7 @@ services:
   myservice:
     image: myservice/myservice:latest
     container_name: myservice
-    restart: {{ container_restart_policy }}
+    restart: {{ default_container_restart_policy }}
     networks:
       - {{ myservice_network }}
     environment:
@@ -114,7 +114,7 @@ If your service needs default variables, create `roles/myservice/defaults/main.y
 myservice_image: "myservice/myservice:latest"
 myservice_dir: "{{ homelab_dir }}/myservice"
 myservice_network: homelab
-container_restart_policy: unless-stopped
+container_restart_policy: "{{ default_container_restart_policy }}"
 ```
 
 ## Step 5: Create Handlers

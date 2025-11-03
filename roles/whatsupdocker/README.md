@@ -45,7 +45,7 @@ whatsupdocker_watchbydefault: true
 whatsupdocker_watchevents: true
 
 # Container restart policy
-container_restart_policy: unless-stopped
+container_restart_policy: "{{ default_container_restart_policy }}"
 ```
 
 ### Host Variables

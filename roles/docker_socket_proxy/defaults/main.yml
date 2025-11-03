@@ -38,4 +38,4 @@ docker_socket_proxy_version: 0
 docker_socket_proxy_dir: "{{ homelab_dir }}/docker-socket-proxy"
 
 # Container restart policy
-container_restart_policy: unless-stopped
+container_restart_policy: "{{ default_container_restart_policy }}"

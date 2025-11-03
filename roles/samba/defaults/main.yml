@@ -8,7 +8,7 @@ samba_service_dir: "{{ homelab_dir }}/samba"
 samba_image: "ghcr.io/servercontainers/samba:latest"
 
 # Container restart policy
-samba_restart_policy: "{{ container_restart_policy | default('unless-stopped') }}"
+samba_restart_policy: "{{ default_container_restart_policy }}"
 
 # Samba port
 samba_port: 445

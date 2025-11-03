@@ -27,7 +27,6 @@ services:
 
 # NAS mounts
 nas_enabled: true
-nas_ip: 192.168.1.60
 nas_mounts:
   - share: MUSIC
     mount_point: /mnt/music

@@ -35,14 +35,15 @@ all:
       hosts:
         orac:
           ansible_host: orac
-          ansible_user: danjam
+
         jarvis:
           ansible_host: jarvis
-          ansible_user: danjam
+
         seraph:
           ansible_host: seraph
-          ansible_user: danjam
 ```
+
+**Note:** `ansible_user` is now centralized in `group_vars/all/vars.yml` and inherited by all hosts.
 
 ## Variable Hierarchy
 
@@ -50,10 +51,12 @@ all:
 `inventory/group_vars/all/vars.yml` - Shared across all machines:
 - `homelab_dir: /opt/homelab`
 - `domain_root: dannyjames.net`
+- `nas_ip: 192.168.1.60` (centralized NAS IP)
+- `ansible_user: danjam` (SSH user for all machines)
 - `timezone: Europe/London`
 - `puid: 1000` / `pgid: 1000`
+- `default_container_restart_policy: unless-stopped`
 - Docker network names
-- Container restart policy
 
 ### Host Variables
 `host_vars/{orac,jarvis,seraph}/vars.yml` - Machine-specific:
@@ -62,7 +65,7 @@ all:
 - `domain` - Full domain (e.g., `orac.dannyjames.net`)
 - `services` - List of services to deploy
 - Service-specific variables (paths, ports, etc.)
-- NAS configuration (orac only)
+- NAS mount configuration (which shares to mount)
 - Samba shares configuration
 
 ### Secrets
@@ -192,7 +195,9 @@ timezone: Europe/London
 puid: 1000
 pgid: 1000
 docker_user: danjam
-container_restart_policy: unless-stopped
+nas_ip: 192.168.1.60
+ansible_user: danjam
+default_container_restart_policy: unless-stopped
 
 # Docker networks
 docker_network_homelab: homelab
@@ -218,7 +223,6 @@ services:
 
 # NAS configuration
 nas_enabled: true
-nas_ip: 192.168.1.60
 nas_mounts:
   - share: MUSIC
     mount_point: /mnt/music

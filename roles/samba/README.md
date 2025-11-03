@@ -33,7 +33,7 @@ Uses these group variables:
 - `default_username`: Username for Samba authentication
 - `default_password`: Password for Samba authentication (should be in vault)
 - `puid`: User ID for container
-- `container_restart_policy`: Default restart policy
+- `default_container_restart_policy`: Default restart policy
 
 ## Example Configuration
 

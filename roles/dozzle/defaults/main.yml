@@ -14,4 +14,4 @@ dozzle_network: homelab
 docker_socket_proxy_endpoint: "tcp://docker-socket-proxy:2375"
 
 # Container restart policy
-container_restart_policy: unless-stopped
+container_restart_policy: "{{ default_container_restart_policy }}"

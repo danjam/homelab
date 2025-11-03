@@ -189,7 +189,7 @@ services:
   my-cool-app:
     image: some-image:latest
     container_name: my-cool-app
-    restart: {{ container_restart_policy }}
+    restart: {{ default_container_restart_policy }}
     networks:
       - homelab
     labels:
