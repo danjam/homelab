@@ -1,9 +1,9 @@
 # Continuation: Next Steps
 
-## 🔄 Phase 3: Core Infrastructure - MOSTLY COMPLETE
+## ✅ Phase 3: Core Infrastructure - COMPLETE
 
 Foundational infrastructure roles status:
-- Phase 3.0: Tailscale (VPN networking) - 🔲 NOT STARTED
+- Phase 3.0: Tailscale (VPN networking) - ✅ COMPLETE
 - Phase 3.1: Common (system setup) - ✅ COMPLETE
 - Phase 3.2: Docker (container engine + networks) - ✅ COMPLETE
 - Phase 3.3: NAS Mounts (storage, 3 shares on orac, 1 on jarvis/seraph) - ✅ COMPLETE
@@ -57,9 +57,8 @@ All core service roles complete:
 
 ### Build Order
 
-1. Next: Tailscale role (Phase 3.0) - VPN networking layer
-2. ✅ Common services (dozzle, whatsupdocker) - COMPLETE
-3. Then: Machine-specific services by complexity:
+1. ✅ Common services (dozzle, whatsupdocker) - COMPLETE
+2. Next: Machine-specific services by complexity:
    - Simple web services first (portainer, it-tools, omni-tools, hugo, etc.)
    - Services with dependencies last (homeassistant, adguardhome, navidrome)
 

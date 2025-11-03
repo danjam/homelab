@@ -39,6 +39,7 @@ All secrets in `inventory/group_vars/all/vault.yml`:
 - `vault_cloudflare_email` - Cloudflare account email
 - `vault_cloudflare_dns_token` - Cloudflare DNS API token (for Let's Encrypt)
 - `vault_default_password` - Default password for services
+- `vault_tailscale_auth_key` - Tailscale reusable auth key (for VPN networking)
 
 **Notifications:**
 - `vault_telegram_bot_token` - Telegram bot token (for jarvis/seraph notifications)
@@ -85,6 +86,16 @@ ansible-vault decrypt inventory/group_vars/all/vault.yml
 ```
 
 ## Getting API Credentials
+
+### Tailscale Auth Key
+1. Log in to Tailscale admin console: https://login.tailscale.com/admin/settings/keys
+2. Generate Keys → Auth keys
+3. Create a **reusable** auth key
+4. Optional: Set key to not expire (for long-term automation)
+5. Optional: Tag the key (e.g., `tag:homelab`) for ACL management
+6. Copy the key (starts with `tskey-auth-`)
+
+**Important:** Use a reusable key so all machines can use the same key.
 
 ### Cloudflare DNS Token
 1. Log in to Cloudflare dashboard

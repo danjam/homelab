@@ -7,7 +7,7 @@ Ansible-based infrastructure-as-code for managing Docker Compose stacks across t
 > Building Ansible automation for homelab deployment.
 >
 > **Current Progress:** Phase 5 - Application Services (2/20 complete)
-> **Status:** ✅ Core infrastructure + core services complete | 🔄 Building application service roles
+> **Status:** ✅ Phases 1-4 complete (infrastructure, core services, VPN) | 🔄 Building application service roles
 
 ## Overview
 
@@ -26,6 +26,7 @@ Modular Ansible-managed infrastructure where each service has its own docker-com
 
 ## Architecture
 
+- **VPN networking**: Tailscale VPN for secure inter-machine communication with MagicDNS and SSH
 - **Modular roles**: Each service has its own role with docker-compose configuration
 - **External networks**: Services communicate via Docker networks (`homelab`, `monitoring`)
 - **Security**: Docker Socket Proxy for secure container access (no direct socket mounts)
@@ -50,7 +51,7 @@ This project is actively being built. Do not attempt to deploy yet.
 
 **What's complete:**
 - ✅ Ansible structure and inventory
-- ✅ Core infrastructure roles (common, docker, NAS mounts)
+- ✅ Core infrastructure roles (tailscale, common, docker, NAS mounts)
 - ✅ Core service roles (proxy, traefik, monitoring, file sharing)
 - ✅ 2/20 application service roles
 
@@ -91,6 +92,7 @@ homelab/
 │   ├── jarvis/
 │   └── seraph/
 ├── roles/                  # Service deployment roles
+│   ├── tailscale/         # ✅ VPN networking
 │   ├── common/            # ✅ Base system setup
 │   ├── docker/            # ✅ Docker + networks
 │   ├── nas_mounts/        # ✅ NAS share mounting
@@ -135,6 +137,7 @@ homelab/
 - **Phase 1:** Security Foundation (single vault, secrets placeholders)
 - **Phase 2:** Ansible Structure (inventory, host vars)
 - **Phase 3:** Core Infrastructure
+  - ✅ tailscale (VPN networking with MagicDNS and SSH)
   - ✅ common (base system setup)
   - ✅ docker (container engine + networks)
   - ✅ nas_mounts (systemd-based NFS/CIFS mounting)

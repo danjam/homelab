@@ -54,6 +54,14 @@ vault_default_password: "PLACEHOLDER_DEFAULT_PASSWORD"
 vault_telegram_bot_token: "PLACEHOLDER_TELEGRAM_BOT_TOKEN"
 vault_telegram_chat_id: "PLACEHOLDER_TELEGRAM_CHAT_ID"
 
+# Tailscale VPN
+# -------------
+# Used by: All machines for VPN networking
+# Where to get: https://login.tailscale.com/admin/settings/keys
+# Create a reusable auth key (optionally set to not expire)
+# Enables: Automated machine authentication, MagicDNS, Tailscale SSH
+vault_tailscale_auth_key: "PLACEHOLDER_TAILSCALE_AUTH_KEY"
+
 # ============================================================================
 # ORAC-SPECIFIC SECRETS
 # ============================================================================

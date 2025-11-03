@@ -1,0 +1,97 @@
+---
+# Tailscale Installation and Configuration
+#
+# Minimal "it just works" approach - trusts Tailscale's smart defaults
+
+- name: Add Tailscale GPG key
+  ansible.builtin.apt_key:
+    url: https://pkgs.tailscale.com/stable/ubuntu/jammy.noarmor.gpg
+    state: present
+  tags: [tailscale, tailscale-install]
+
+- name: Add Tailscale repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://pkgs.tailscale.com/stable/ubuntu jammy main"
+    state: present
+    filename: tailscale
+  tags: [tailscale, tailscale-install]
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  tags: [tailscale, tailscale-install]
+
+- name: Install Tailscale
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+  notify: restart tailscaled
+  tags: [tailscale, tailscale-install]
+
+- name: Ensure tailscaled service is started and enabled
+  ansible.builtin.systemd:
+    name: tailscaled
+    state: started
+    enabled: yes
+  tags: [tailscale, tailscale-install]
+
+- name: Wait for tailscaled socket to be ready
+  ansible.builtin.wait_for:
+    path: /run/tailscale/tailscaled.sock
+    timeout: 30
+  tags: [tailscale, tailscale-install]
+
+- name: Check if Tailscale is already authenticated
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+  tags: [tailscale, tailscale-auth, tailscale-verify]
+
+- name: Parse Tailscale status
+  ansible.builtin.set_fact:
+    tailscale_authenticated: "{{ (tailscale_status.stdout | from_json).BackendState == 'Running' }}"
+  when: tailscale_status.rc == 0
+  tags: [tailscale, tailscale-auth]
+
+- name: Authenticate with Tailscale
+  ansible.builtin.command: >
+    tailscale up
+    --authkey={{ tailscale_authkey }}
+    {% if tailscale_enable_ssh %}--ssh{% endif %}
+  when: not (tailscale_authenticated | default(false))
+  register: tailscale_up_result
+  no_log: true  # Don't log the auth key
+  tags: [tailscale, tailscale-auth]
+
+- name: Get Tailscale status after authentication
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_final_status
+  changed_when: false
+  tags: [tailscale, tailscale-verify]
+
+- name: Parse final Tailscale status
+  ansible.builtin.set_fact:
+    tailscale_info: "{{ tailscale_final_status.stdout | from_json }}"
+  tags: [tailscale, tailscale-verify]
+
+- name: Display Tailscale connection information
+  ansible.builtin.debug:
+    msg:
+      - "Tailscale Status: {{ tailscale_info.BackendState }}"
+      - "Hostname: {{ tailscale_info.Self.HostName }}"
+      - "Tailscale IP: {{ tailscale_info.Self.TailscaleIPs[0] }}"
+      - "DNS Name: {{ tailscale_info.Self.DNSName }}"
+      - "MagicDNS: {{ 'Enabled' if tailscale_info.Self.CapMap is defined and 'https://tailscale.com/cap/dns' in (tailscale_info.Self.CapMap | dict2items | map(attribute='key') | list) else 'Check Status' }}"
+      - "Tailscale SSH: {{ 'Enabled' if tailscale_enable_ssh else 'Disabled' }}"
+  tags: [tailscale, tailscale-verify]
+
+- name: Verify Tailscale is running
+  ansible.builtin.assert:
+    that:
+      - tailscale_info.BackendState == "Running"
+      - tailscale_info.Self.TailscaleIPs | length > 0
+    fail_msg: "Tailscale is not running or not properly connected"
+    success_msg: "Tailscale is connected and running"
+  tags: [tailscale, tailscale-verify]

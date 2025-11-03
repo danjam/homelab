@@ -1,0 +1,18 @@
+---
+# Tailscale Role - Default Variables
+#
+# This role embraces Tailscale's "it just works" philosophy with minimal configuration.
+# Most settings use Tailscale's smart defaults.
+
+# Enable Tailscale SSH (eliminates need for SSH keys)
+tailscale_enable_ssh: true
+
+# Auth key for automated authentication (from vault)
+tailscale_authkey: "{{ vault_tailscale_auth_key }}"
+
+# Note: The following are handled automatically by Tailscale defaults:
+# - MagicDNS (enabled by default)
+# - Hostname (uses system hostname)
+# - Route acceptance (enabled by default)
+# - Auto-updates (enabled by default)
+# - NAT traversal and port mapping (automatic)
