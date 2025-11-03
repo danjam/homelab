@@ -27,21 +27,25 @@ Migrate the existing monolithic docker-compose homelab setup to a modern Ansible
 | **Phase 4.2: Traefik** | **✅ COMPLETE** | Depends on 4.1, ready to deploy |
 | **Phase 4.3: Beszel Roles** | **✅ COMPLETE** | Hub + Agent roles ready, uses shared public key |
 | **Phase 4.4: Samba** | **✅ COMPLETE** | File sharing role ready |
-| Phase 5: Application Services | 🔄 IN PROGRESS | 2/20 complete (dozzle ✅, whatsupdocker ✅) |
-| Phase 6: Playbooks | 🔲 Not Started | Orchestration playbooks needed |
+| Phase 5: Application Services | ⏸️ PARTIAL (DEFERRED) | 2 common services complete, 18 machine-specific deferred |
+| **Phase 6: Playbooks** | **🎯 NEXT** | Orchestration playbooks - ready to create |
 | Phase 7: Testing | 🔲 Not Started | Per-machine deployment testing |
-| Phase 8: Documentation | 🔲 Not Started | End-user docs (Traefik role docs ✅) |
+| Phase 8: Documentation | 🔲 Not Started | End-user deployment guide |
 | Phase 9: Repository Prep | 🔲 Not Started | Final git checks and secrets verification |
 
-**Current Status:** Phases 1-4 COMPLETE. Phase 5 IN PROGRESS - Common services complete (dozzle, whatsupdocker). 18 machine-specific services remaining.
+**Current Status:** Phases 1-4 COMPLETE. Phase 5 PARTIALLY COMPLETE - Common services (dozzle, whatsupdocker) complete, 18 machine-specific services deferred. Phase 6 (Playbooks) is NEXT.
 
 **Next Steps:**
-1. Phase 5: Create remaining 18 machine-specific application service roles (orac: 13, jarvis: 1, seraph: 4)
-2. Phase 6: Build orchestration playbooks (site.yml)
-3. Phase 7-9: Testing, documentation, and repo prep
-4. **THEN**: User fills secrets and deploys once
+1. **Phase 6 (NOW)**: Create orchestration playbooks (`site.yml`)
+2. Phase 7: Test deployment on jarvis (simplest machine)
+3. Phase 8: Create end-user deployment guide
+4. Phase 9: Repository prep and final verification
+5. Phase 5 (LATER): Add remaining application services incrementally after core infrastructure validated
+6. **THEN**: User fills secrets and deploys
 
 **Important:** Secrets are filled at deployment time, not during build. The `playbooks/setup-secrets.yml` playbook generates required keys when the user is ready to deploy.
+
+**Rationale for Deferring Phase 5:** We have enough services (10 roles) to validate the entire infrastructure stack. Adding remaining application services can be done incrementally after core infrastructure is proven working.
 
 ---
 

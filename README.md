@@ -6,8 +6,8 @@ Ansible-based infrastructure-as-code for managing Docker Compose stacks across t
 >
 > Building Ansible automation for homelab deployment.
 >
-> **Current Progress:** Phase 5 - Application Services (2/20 complete)
-> **Status:** ✅ Phases 1-4 complete (infrastructure, core services, VPN) | 🔄 Building application service roles
+> **Current Progress:** Phase 6 - Orchestration Playbooks (next to create)
+> **Status:** ✅ Phases 1-4 complete (infrastructure, core services, VPN) | ⏸️ Phase 5 partially complete (deferred) | 🎯 Phase 6 ready to build
 
 ## Overview
 
@@ -55,13 +55,14 @@ This project is actively being built. Do not attempt to deploy yet.
 - ✅ Ansible structure and inventory
 - ✅ Core infrastructure roles (tailscale, common, docker, NAS mounts)
 - ✅ Core service roles (proxy, traefik, monitoring, file sharing)
-- ✅ 2/20 application service roles
+- ✅ 2 common application service roles (dozzle, whatsupdocker)
+- ✅ Configuration centralization (single source of truth)
 
 **What's remaining:**
-- 🔲 18 application service roles
-- 🔲 Main deployment playbook (`site.yml`)
+- 🎯 Main deployment playbook (`site.yml`) - NEXT
 - 🔲 Testing and validation
 - 🔲 End-user documentation
+- ⏸️ 18 machine-specific application service roles (deferred until after testing)
 
 **When complete, deployment will be:**
 ```bash
@@ -133,11 +134,11 @@ homelab/
 
 ## Build Status
 
-**Current Phase:** Phase 5 - Application Services (2/20 complete)
+**Current Phase:** Phase 6 - Orchestration Playbooks (next to create)
 
 ### Completed ✅
 - **Phase 1:** Security Foundation (single vault, secrets placeholders)
-- **Phase 2:** Ansible Structure (inventory, host vars)
+- **Phase 2:** Ansible Structure (inventory, host vars, centralized config)
 - **Phase 3:** Core Infrastructure
   - ✅ tailscale (VPN networking with MagicDNS and SSH)
   - ✅ common (base system setup)
@@ -148,16 +149,18 @@ homelab/
   - ✅ traefik (reverse proxy with Let's Encrypt)
   - ✅ beszel + beszel_agent (monitoring)
   - ✅ samba (file sharing)
-- **Phase 5:** Application Services (IN PROGRESS - 2/20)
+- **Phase 5:** Application Services (PARTIALLY COMPLETE - 2 common services, 18 machine-specific deferred)
   - ✅ dozzle (log viewer)
   - ✅ whatsupdocker (update checker)
-  - 🔲 18 machine-specific services remaining
+  - ⏸️ 18 machine-specific services deferred until after core infrastructure testing
 
-### Not Started 🔴
-- **Phase 6:** Orchestration Playbooks (site.yml)
-- **Phase 7:** Testing & Validation
+### Next 🎯
+- **Phase 6:** Orchestration Playbooks (site.yml) - READY TO BUILD
+- **Phase 7:** Testing & Validation (on jarvis first)
 - **Phase 8:** End-User Documentation
 - **Phase 9:** Repository Finalization
+
+**Rationale:** We have enough services (10 roles) to validate the entire infrastructure. Remaining application services can be added incrementally after core infrastructure is proven working.
 
 See [PLAN.md](PLAN.md) for detailed phase breakdown and [CONTINUATION.md](CONTINUATION.md) for current work.
 
