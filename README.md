@@ -28,6 +28,7 @@ Modular Ansible-managed infrastructure where each service has its own docker-com
 
 - **VPN networking**: Tailscale VPN for secure inter-machine communication with MagicDNS and SSH
 - **Modular roles**: Each service has its own role with docker-compose configuration
+- **Additive-only deployment**: Ansible manages declared services, ignores manual experiments
 - **External networks**: Services communicate via Docker networks (`homelab`, `monitoring`)
 - **Security**: Docker Socket Proxy for secure container access (no direct socket mounts)
 - **HTTPS**: Traefik reverse proxy with automatic Let's Encrypt certificates
@@ -39,6 +40,7 @@ Modular Ansible-managed infrastructure where each service has its own docker-com
 - 🔒 **Encrypted secrets** - ansible-vault with single vault file
 - 🐳 **Docker-first** - All services containerized
 - 🔄 **Idempotent** - Safe to run multiple times
+- 🧪 **Experiment-friendly** - Manual containers coexist peacefully with Ansible-managed services
 - 📝 **Well-documented** - Each role has comprehensive README
 - 🎯 **Targeted deployments** - Deploy by host, service, or tag
 - 🔐 **Secure by default** - Docker Socket Proxy, HTTPS-only, no root

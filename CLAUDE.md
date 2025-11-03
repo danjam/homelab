@@ -48,6 +48,20 @@ Homelab infrastructure using Ansible to deploy Docker Compose stacks across thre
 
 ---
 
+## Homelab Philosophy: Coexistence Model
+
+**This is a LAB - experimentation is part of it.**
+
+### Additive-Only Ansible
+- Ansible manages services declared in `host_vars/{machine}/vars.yml` services list
+- Ansible NEVER removes undeclared services or containers
+- Manual experiments coexist in `/opt/homelab/` (no artificial separation)
+- Source of truth: If in services list → Ansible manages. If not → user manages manually.
+
+**See:** `docs/experiments.md` for full workflow guide (starting experiments, using Traefik, promotion process, cleanup).
+
+---
+
 ## Deployment Workflow (When Build Complete)
 
 ```bash
