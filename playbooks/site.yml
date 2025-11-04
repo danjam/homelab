@@ -1,30 +1,175 @@
 ---
 # Main deployment playbook for homelab infrastructure
-# Usage: ansible-playbook playbooks/site.yml
+#
+# This playbook deploys the complete homelab stack across all machines.
+# Roles are executed in dependency order with proper conditionals.
+#
+# Usage Examples:
+#   # Deploy everything to all machines
+#   ansible-playbook playbooks/site.yml
+#
+#   # Deploy to specific machine
+#   ansible-playbook playbooks/site.yml --limit orac
+#
+#   # Deploy specific service
+#   ansible-playbook playbooks/site.yml --tags traefik
+#
+#   # Deploy infrastructure layer only
+#   ansible-playbook playbooks/site.yml --tags infrastructure
+#
+#   # Dry run (check mode)
+#   ansible-playbook playbooks/site.yml --check --diff
+#
+# Tag Reference:
+#   Layers:
+#     - infrastructure: Foundation (tailscale, common, docker, nas_mounts)
+#     - core-services: Core services (docker_socket_proxy, traefik, beszel, samba)
+#     - apps: Applications (dozzle, whatsupdocker, beszel_agent)
+#
+#   Functions:
+#     - base-os: System setup (common)
+#     - network: VPN networking (tailscale)
+#     - docker-engine: Container runtime (docker)
+#     - storage: Storage services (nas_mounts, samba)
+#     - docker-infra: Docker infrastructure (docker_socket_proxy, traefik)
+#     - monitoring: Monitoring services (beszel, beszel_agent, dozzle, whatsupdocker)
+#
+#   Individual services:
+#     - tailscale, common, docker, nas-mounts
+#     - docker-socket-proxy, traefik
+#     - beszel, beszel-agent
+#     - samba, dozzle, whatsupdocker
 
 - name: Deploy Homelab Infrastructure
-  hosts: homelab
+  hosts: all
   become: true
-  
+  gather_facts: true
+
   pre_tasks:
-    - name: Update apt cache
+    - name: Update apt cache (Debian/Ubuntu)
       ansible.builtin.apt:
         update_cache: yes
+        force_apt_get: yes
         cache_valid_time: 3600
       when: ansible_os_family == "Debian"
-      tags: ['always']
+      tags: always
+
+    - name: Display deployment target
+      ansible.builtin.debug:
+        msg: |
+          ========================================
+          Deploying to: {{ inventory_hostname }}
+          Host: {{ ansible_host }}
+          Services configured: {{ services | length }}
+          Domain: {{ domain }}
+          ========================================
+      tags: always
 
   roles:
-    - role: docker
-      tags: ['docker']
-    
+    # ==========================================
+    # PHASE 1: FOUNDATION (Sequential - MUST run in order)
+    # ==========================================
+
+    - role: tailscale
+      tags:
+        - tailscale
+        - network
+        - infrastructure
+
     - role: common
-      tags: ['common']
-    
+      tags:
+        - common
+        - base-os
+        - infrastructure
+
+    - role: docker
+      tags:
+        - docker
+        - docker-engine
+        - infrastructure
+
+    # ==========================================
+    # PHASE 2: INFRASTRUCTURE SERVICES (Can run in parallel)
+    # ==========================================
+
+    - role: nas_mounts
+      when: nas_enabled | default(false)
+      tags:
+        - nas-mounts
+        - storage
+        - infrastructure
+
+    - role: docker_socket_proxy
+      when: "'docker-socket-proxy' in services"
+      tags:
+        - docker-socket-proxy
+        - docker-infra
+        - core-services
+
+    - role: dozzle
+      when: "'dozzle' in services"
+      tags:
+        - dozzle
+        - monitoring
+        - apps
+
+    - role: whatsupdocker
+      when: "'whatsupdocker' in services"
+      tags:
+        - whatsupdocker
+        - monitoring
+        - apps
+
+    # ==========================================
+    # PHASE 3: DEPENDENT SERVICES (Order matters)
+    # ==========================================
+
     - role: traefik
       when: "'traefik' in services"
-      tags: ['traefik']
-    
+      tags:
+        - traefik
+        - docker-infra
+        - core-services
+
     - role: beszel
       when: "'beszel' in services"
-      tags: ['beszel']
+      tags:
+        - beszel
+        - monitoring
+        - core-services
+
+    - role: beszel_agent
+      when: "'beszel-agent' in services"
+      tags:
+        - beszel-agent
+        - monitoring
+        - apps
+
+    - role: samba
+      when: "'samba' in services"
+      tags:
+        - samba
+        - storage
+        - core-services
+
+  post_tasks:
+    - name: Display deployment summary
+      ansible.builtin.debug:
+        msg: |
+          ========================================
+          Deployment complete on {{ inventory_hostname }}
+          ========================================
+      tags: always
+
+    - name: Show running containers
+      ansible.builtin.command: docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+      register: docker_ps
+      changed_when: false
+      failed_when: false
+      tags: always
+
+    - name: Display container status
+      ansible.builtin.debug:
+        var: docker_ps.stdout_lines
+      when: docker_ps.stdout_lines is defined
+      tags: always

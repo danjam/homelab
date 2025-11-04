@@ -1,0 +1,82 @@
+---
+# Deploy only core infrastructure services
+#
+# This playbook deploys the essential core services that form the infrastructure backbone.
+# Use this for quick deployments or when you only need to update core services.
+#
+# Services included:
+#   - docker_socket_proxy: Secure Docker API access
+#   - traefik: HTTPS reverse proxy
+#   - beszel: Monitoring hub (seraph only)
+#   - beszel_agent: Monitoring agents (all hosts)
+#
+# Usage Examples:
+#   # Deploy core services to all machines
+#   ansible-playbook playbooks/deploy-core.yml
+#
+#   # Deploy to specific machine
+#   ansible-playbook playbooks/deploy-core.yml --limit orac
+#
+#   # Deploy only Traefik
+#   ansible-playbook playbooks/deploy-core.yml --tags traefik
+#
+#   # Dry run
+#   ansible-playbook playbooks/deploy-core.yml --check --diff
+
+- name: Deploy Core Infrastructure Services
+  hosts: all
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        force_apt_get: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+      tags: always
+
+    - name: Display deployment info
+      ansible.builtin.debug:
+        msg: "Deploying core services to {{ inventory_hostname }}"
+      tags: always
+
+  roles:
+    - role: docker_socket_proxy
+      when: "'docker-socket-proxy' in services"
+      tags:
+        - docker-socket-proxy
+        - docker-infra
+
+    - role: traefik
+      when: "'traefik' in services"
+      tags:
+        - traefik
+        - docker-infra
+
+    - role: beszel
+      when: "'beszel' in services"
+      tags:
+        - beszel
+        - monitoring
+
+    - role: beszel_agent
+      when: "'beszel-agent' in services"
+      tags:
+        - beszel-agent
+        - monitoring
+
+  post_tasks:
+    - name: Show deployed core services
+      ansible.builtin.command: docker ps --filter "name=traefik|beszel|docker-socket-proxy" --format "table {{.Names}}\t{{.Status}}"
+      register: core_services
+      changed_when: false
+      failed_when: false
+      tags: always
+
+    - name: Display core service status
+      ansible.builtin.debug:
+        var: core_services.stdout_lines
+      when: core_services.stdout_lines is defined
+      tags: always

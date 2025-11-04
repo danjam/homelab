@@ -28,20 +28,19 @@ Migrate the existing monolithic docker-compose homelab setup to a modern Ansible
 | **Phase 4.3: Beszel Roles** | **✅ COMPLETE** | Hub + Agent roles ready, uses shared public key |
 | **Phase 4.4: Samba** | **✅ COMPLETE** | File sharing role ready |
 | Phase 5: Application Services | ⏸️ PARTIAL (DEFERRED) | 2 common services complete, 18 machine-specific deferred |
-| **Phase 6: Playbooks** | **🎯 NEXT** | Orchestration playbooks - ready to create |
-| Phase 7: Testing | 🔲 Not Started | Per-machine deployment testing |
+| **Phase 6: Playbooks** | **✅ COMPLETE** | 5 orchestration playbooks created and validated |
+| **Phase 7: Testing** | **🎯 NEXT** | Per-machine deployment testing |
 | Phase 8: Documentation | 🔲 Not Started | End-user deployment guide |
 | Phase 9: Repository Prep | 🔲 Not Started | Final git checks and secrets verification |
 
-**Current Status:** Phases 1-4 COMPLETE. Phase 5 PARTIALLY COMPLETE - Common services (dozzle, whatsupdocker) complete, 18 machine-specific services deferred. Phase 6 (Playbooks) is NEXT.
+**Current Status:** Phases 1-6 COMPLETE. Phase 5 PARTIALLY COMPLETE - Common services (dozzle, whatsupdocker) complete, 18 machine-specific services deferred. Phase 7 (Testing) is NEXT.
 
 **Next Steps:**
-1. **Phase 6 (NOW)**: Create orchestration playbooks (`site.yml`)
-2. Phase 7: Test deployment on jarvis (simplest machine)
-3. Phase 8: Create end-user deployment guide
-4. Phase 9: Repository prep and final verification
-5. Phase 5 (LATER): Add remaining application services incrementally after core infrastructure validated
-6. **THEN**: User fills secrets and deploys
+1. **Phase 7 (NOW)**: Test deployment on jarvis (simplest machine - 7 services)
+2. Phase 8: Create end-user deployment guide
+3. Phase 9: Repository prep and final verification
+4. Phase 5 (LATER): Add remaining application services incrementally after core infrastructure validated
+5. **THEN**: User fills secrets and deploys
 
 **Important:** Secrets are filled at deployment time, not during build. The `playbooks/setup-secrets.yml` playbook generates required keys when the user is ready to deploy.
 
@@ -924,7 +923,120 @@ networks:
 
 ---
 
-## Phase 6: Create Playbooks
+## Phase 6: Create Playbooks ✅ COMPLETE (2025-01-04)
+
+**Goal:** Create orchestration playbooks for deployment and management
+
+### What Was Built:
+
+**5 Playbooks Created (Total: 27KB):**
+
+1. **`playbooks/site.yml` (4.6KB)** - Main deployment playbook
+   - All 10 roles in correct dependency order (3 phases)
+   - Multi-level tagging (layer, function, individual)
+   - Conditional execution based on services lists
+   - Pre-tasks and post-tasks with status display
+   - Comprehensive inline documentation
+
+2. **`playbooks/deploy-core.yml` (2.2KB)** - Core services helper
+   - Fast deployment of docker_socket_proxy, traefik, beszel
+   - Useful for infrastructure updates
+
+3. **`playbooks/verify.yml` (5.5KB)** - Health checks and verification
+   - Docker service status
+   - Network verification
+   - Tailscale connectivity
+   - Container health checks
+   - NAS mount verification
+   - Disk space monitoring
+
+4. **`playbooks/stop-all.yml` (3.4KB)** - Maintenance mode
+   - Gracefully stops all services
+   - Verification of stopped state
+   - Useful for system maintenance
+
+5. **`playbooks/README.md` (11KB)** - Comprehensive usage documentation
+   - All playbook usage examples
+   - Complete tag reference
+   - Common workflow patterns
+   - Machine-specific deployment notes
+   - Troubleshooting commands
+
+### Execution Order (Validated):
+
+**Phase 1: Foundation (Sequential)**
+1. tailscale - VPN networking layer
+2. common - System setup and packages
+3. docker - Container runtime and networks
+
+**Phase 2: Infrastructure Services (Parallel)**
+4. nas_mounts - NAS storage (conditional)
+5. docker_socket_proxy - Secure Docker API
+6. dozzle - Log viewer
+7. whatsupdocker - Update checker
+
+**Phase 3: Dependent Services (Sequential)**
+8. traefik - Reverse proxy (REQUIRES docker_socket_proxy)
+9. beszel - Monitoring hub (seraph only)
+10. beszel_agent - Monitoring agents
+11. samba - File sharing
+
+### Tag Hierarchy:
+
+**Layers:**
+- `infrastructure` - tailscale, common, docker, nas_mounts
+- `core-services` - docker_socket_proxy, traefik, beszel, samba
+- `apps` - dozzle, whatsupdocker, beszel_agent
+
+**Functions:**
+- `base-os`, `network`, `docker-engine`
+- `storage` - nas_mounts, samba
+- `docker-infra` - docker_socket_proxy, traefik
+- `monitoring` - beszel, beszel_agent, dozzle, whatsupdocker
+
+**Individual service tags available for all roles**
+
+### Features:
+
+- ✅ Idempotent - safe to run multiple times
+- ✅ Conditional execution based on services lists
+- ✅ Proper dependency ordering enforced
+- ✅ Comprehensive tagging for selective deployment
+- ✅ All playbooks syntax validated
+- ✅ Pre/post-tasks for status reporting
+- ✅ Clear progress and error output
+
+### Usage Examples:
+
+```bash
+# Deploy everything
+ansible-playbook playbooks/site.yml
+
+# Deploy to specific machine
+ansible-playbook playbooks/site.yml --limit jarvis
+
+# Deploy specific layer
+ansible-playbook playbooks/site.yml --tags infrastructure
+
+# Deploy specific service
+ansible-playbook playbooks/site.yml --tags traefik
+
+# Dry run
+ansible-playbook playbooks/site.yml --check --diff
+
+# Verify deployment
+ansible-playbook playbooks/verify.yml
+```
+
+**Status:** ✅ COMPLETE - Ready for Phase 7 testing
+
+**Deliverables:** All 5 playbooks created, validated, and documented
+
+**Estimated Time:** 2-3 hours (COMPLETED in ~2 hours)
+
+---
+
+## Phase 6: Create Playbooks (REFERENCE - Original Plan)
 
 ### 6.1 Main Site Playbook
 

@@ -1,0 +1,105 @@
+---
+# Stop all homelab services for maintenance
+#
+# This playbook gracefully stops all Docker Compose services across the infrastructure.
+# Use this when you need to perform system maintenance, updates, or troubleshooting.
+#
+# WARNING: This will stop ALL services, making them inaccessible until restarted.
+#
+# Usage Examples:
+#   # Stop all services on all machines
+#   ansible-playbook playbooks/stop-all.yml
+#
+#   # Stop services on specific machine
+#   ansible-playbook playbooks/stop-all.yml --limit orac
+#
+#   # Dry run (see what would be stopped)
+#   ansible-playbook playbooks/stop-all.yml --check
+#
+# To restart services after maintenance:
+#   ansible-playbook playbooks/site.yml
+
+- name: Stop All Homelab Services
+  hosts: all
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Display warning
+      ansible.builtin.debug:
+        msg: |
+          ========================================
+          WARNING: Stopping all services on {{ inventory_hostname }}
+          This will make all services inaccessible.
+          ========================================
+      tags: always
+
+    - name: Find all docker-compose.yml files
+      ansible.builtin.find:
+        paths: "{{ homelab_dir }}"
+        patterns: "docker-compose.yml"
+        recurse: yes
+        file_type: file
+      register: compose_files
+      tags: always
+
+    - name: Display found services
+      ansible.builtin.debug:
+        msg: "Found {{ compose_files.files | length }} services to stop"
+      tags: always
+
+    - name: Stop all Docker Compose services
+      community.docker.docker_compose_v2:
+        project_src: "{{ item.path | dirname }}"
+        state: stopped
+      loop: "{{ compose_files.files }}"
+      ignore_errors: yes
+      register: stop_results
+      tags: always
+
+    - name: Display stop results
+      ansible.builtin.debug:
+        msg: "Stopped service in: {{ item.item.path | dirname }}"
+      loop: "{{ stop_results.results }}"
+      when: not item.failed | default(false)
+      tags: always
+
+    - name: Display failed stops (if any)
+      ansible.builtin.debug:
+        msg: "Failed to stop service in: {{ item.item.path | dirname }}"
+      loop: "{{ stop_results.results }}"
+      when: item.failed | default(false)
+      tags: always
+
+    - name: Verify no containers are running
+      ansible.builtin.command: docker ps -q
+      changed_when: false
+      register: running_containers
+      tags: always
+
+    - name: Display verification result
+      ansible.builtin.debug:
+        msg: |
+          ========================================
+          Stop operation complete on {{ inventory_hostname }}
+          Running containers: {{ running_containers.stdout_lines | length }}
+          {{ 'All services stopped successfully!' if running_containers.stdout_lines | length == 0 else 'Warning: Some containers may still be running' }}
+          ========================================
+      tags: always
+
+    - name: List any still-running containers
+      ansible.builtin.command: docker ps --format "table {{.Names}}\t{{.Status}}"
+      changed_when: false
+      register: remaining_containers
+      when: running_containers.stdout_lines | length > 0
+      tags: always
+
+    - name: Show remaining containers
+      ansible.builtin.debug:
+        msg: |
+          Still running:
+          {{ remaining_containers.stdout }}
+      when:
+        - running_containers.stdout_lines | length > 0
+        - remaining_containers.stdout is defined
+      tags: always

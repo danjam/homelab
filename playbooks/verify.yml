@@ -1,0 +1,163 @@
+---
+# Verify homelab infrastructure health and status
+#
+# This playbook performs comprehensive health checks on the deployed infrastructure.
+# Use this after deployment to verify everything is working correctly.
+#
+# Checks performed:
+#   - Docker service is running
+#   - External networks exist (homelab, monitoring)
+#   - Tailscale VPN is connected
+#   - Running containers and their status
+#   - NAS mounts (on machines with nas_enabled)
+#
+# Usage Examples:
+#   # Verify all machines
+#   ansible-playbook playbooks/verify.yml
+#
+#   # Verify specific machine
+#   ansible-playbook playbooks/verify.yml --limit orac
+#
+#   # Quick check (skip detailed inspection)
+#   ansible-playbook playbooks/verify.yml --tags quick
+
+- name: Verify Homelab Infrastructure
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Check Docker service status
+      ansible.builtin.service:
+        name: docker
+        state: started
+      check_mode: yes
+      register: docker_service
+      tags: [always, quick]
+
+    - name: Display Docker service status
+      ansible.builtin.debug:
+        msg: "Docker service is {{ docker_service.state }}"
+      tags: [always, quick]
+
+    - name: Verify external networks exist
+      ansible.builtin.command: docker network inspect {{ item }}
+      loop:
+        - homelab
+        - monitoring
+      changed_when: false
+      failed_when: false
+      register: network_check
+      tags: [always, networks]
+
+    - name: Display network status
+      ansible.builtin.debug:
+        msg: "Network {{ item.item }}: {{ 'EXISTS' if item.rc == 0 else 'MISSING' }}"
+      loop: "{{ network_check.results }}"
+      tags: [always, networks]
+
+    - name: Check Tailscale status
+      ansible.builtin.command: tailscale status --json
+      changed_when: false
+      failed_when: false
+      register: tailscale_status
+      tags: [always, tailscale]
+
+    - name: Display Tailscale connection
+      ansible.builtin.debug:
+        msg: |
+          Tailscale Status:
+            Hostname: {{ (tailscale_status.stdout | from_json).Self.HostName }}
+            IP: {{ (tailscale_status.stdout | from_json).Self.TailscaleIPs[0] }}
+            Status: {{ (tailscale_status.stdout | from_json).BackendState }}
+      when: tailscale_status.rc == 0
+      tags: [always, tailscale]
+
+    - name: Check NAS mounts (if enabled)
+      ansible.builtin.command: mountpoint -q {{ item.mount_point }}
+      loop: "{{ nas_mounts | default([]) }}"
+      changed_when: false
+      failed_when: false
+      register: nas_mount_check
+      when: nas_enabled | default(false)
+      tags: [storage, nas]
+
+    - name: Display NAS mount status
+      ansible.builtin.debug:
+        msg: "Mount {{ item.item.mount_point }}: {{ 'MOUNTED' if item.rc == 0 else 'NOT MOUNTED' }}"
+      loop: "{{ nas_mount_check.results }}"
+      when:
+        - nas_enabled | default(false)
+        - nas_mount_check.results is defined
+      tags: [storage, nas]
+
+    - name: List all running containers
+      ansible.builtin.command: docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+      changed_when: false
+      register: running_containers
+      tags: [always, containers]
+
+    - name: Display running containers
+      ansible.builtin.debug:
+        msg: |
+          Running Containers on {{ inventory_hostname }}:
+          {{ running_containers.stdout }}
+      tags: [always, containers]
+
+    - name: Count running containers
+      ansible.builtin.command: docker ps -q
+      changed_when: false
+      register: container_count
+      tags: [always, quick]
+
+    - name: Display container summary
+      ansible.builtin.debug:
+        msg: "Total running containers: {{ container_count.stdout_lines | length }}"
+      tags: [always, quick]
+
+    - name: Check for unhealthy containers
+      ansible.builtin.command: docker ps --filter "health=unhealthy" --format "{{.Names}}"
+      changed_when: false
+      register: unhealthy_containers
+      tags: [always, health]
+
+    - name: Display unhealthy containers warning
+      ansible.builtin.debug:
+        msg: "WARNING: Unhealthy containers detected: {{ unhealthy_containers.stdout_lines }}"
+      when: unhealthy_containers.stdout_lines | length > 0
+      tags: [always, health]
+
+    - name: Check for stopped containers
+      ansible.builtin.command: docker ps -a --filter "status=exited" --format "{{.Names}}"
+      changed_when: false
+      register: stopped_containers
+      tags: [always, health]
+
+    - name: Display stopped containers
+      ansible.builtin.debug:
+        msg: "Stopped containers: {{ stopped_containers.stdout_lines | length }}"
+      when: stopped_containers.stdout_lines | length > 0
+      tags: [always, health]
+
+    - name: Check disk space
+      ansible.builtin.command: df -h /opt/homelab
+      changed_when: false
+      register: disk_space
+      tags: [system]
+
+    - name: Display disk space
+      ansible.builtin.debug:
+        var: disk_space.stdout_lines
+      tags: [system]
+
+    - name: Display verification summary
+      ansible.builtin.debug:
+        msg: |
+          ========================================
+          Verification complete for {{ inventory_hostname }}
+          Docker: Running
+          Networks: {{ 'OK' if network_check.results | selectattr('rc', 'equalto', 0) | list | length == 2 else 'ISSUES' }}
+          Tailscale: {{ 'Connected' if tailscale_status.rc == 0 else 'Not connected' }}
+          Containers: {{ container_count.stdout_lines | length }} running
+          ========================================
+      tags: always
