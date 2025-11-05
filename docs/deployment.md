@@ -1,8 +1,10 @@
 # Deployment Guide
 
-⚠️ **NOTE:** This project is currently under construction. The main deployment playbook (`site.yml`) has not been created yet. This guide documents the intended deployment workflow once the build is complete.
+This guide documents deployment workflows for the homelab infrastructure using Ansible playbooks.
 
-## Quick Start (When Available)
+For comprehensive playbook documentation including all tags and usage patterns, see [playbooks/README.md](../playbooks/README.md).
+
+## Quick Start
 
 Deploy everything to all machines:
 
@@ -32,14 +34,25 @@ ansible-playbook playbooks/site.yml --tags traefik
 ansible-playbook playbooks/site.yml --tags dozzle
 
 # Deploy multiple services
-ansible-playbook playbooks/site.yml --tags traefik,dozzle,whatsupdocker
+ansible-playbook playbooks/site.yml --tags "traefik,dozzle,whatsupdocker"
 
-# Deploy all core infrastructure
-ansible-playbook playbooks/site.yml --tags docker,common,nas
+# Deploy all infrastructure layer
+ansible-playbook playbooks/site.yml --tags infrastructure
 
 # Deploy all core services
-ansible-playbook playbooks/site.yml --tags docker-socket-proxy,traefik,beszel,samba
+ansible-playbook playbooks/site.yml --tags core-services
+
+# Deploy all applications
+ansible-playbook playbooks/site.yml --tags apps
+
+# Deploy all monitoring services
+ansible-playbook playbooks/site.yml --tags monitoring
+
+# Deploy all storage services
+ansible-playbook playbooks/site.yml --tags storage
 ```
+
+See [playbooks/README.md](../playbooks/README.md) for complete tag reference.
 
 ### Combine Limits and Tags
 
@@ -65,26 +78,31 @@ ansible-playbook playbooks/site.yml --check --diff
 ### Initial Deployment
 
 ```bash
-# 1. Test connectivity
+# 1. Generate secrets (if not done yet)
+ansible-playbook playbooks/setup-secrets.yml
+
+# 2. Fill vault with secrets
+ansible-vault edit inventory/group_vars/all/vault.yml
+
+# 3. Test connectivity
 ansible all -m ping
 
-# 2. Deploy core infrastructure (in order)
-ansible-playbook playbooks/site.yml --tags common
-ansible-playbook playbooks/site.yml --tags docker
-ansible-playbook playbooks/site.yml --tags nas  # orac only
+# 4. Deploy everything (recommended for first deployment)
+ansible-playbook playbooks/site.yml
 
-# 3. Deploy core services (in order - dependencies matter)
-ansible-playbook playbooks/site.yml --tags docker-socket-proxy
-ansible-playbook playbooks/site.yml --tags traefik
-ansible-playbook playbooks/site.yml --tags beszel  # seraph only
-ansible-playbook playbooks/site.yml --tags beszel-agent
-ansible-playbook playbooks/site.yml --tags samba
+# OR deploy in phases:
 
-# 4. Deploy common application services
-ansible-playbook playbooks/site.yml --tags dozzle,whatsupdocker
+# 5a. Deploy infrastructure layer (tailscale, common, docker, nas_mounts)
+ansible-playbook playbooks/site.yml --tags infrastructure
 
-# 5. Deploy machine-specific services (when roles are complete)
-ansible-playbook playbooks/site.yml --tags navidrome --limit orac
+# 5b. Deploy core services (docker_socket_proxy, traefik, beszel, samba)
+ansible-playbook playbooks/site.yml --tags core-services
+
+# 5c. Deploy applications (dozzle, whatsupdocker, beszel_agent)
+ansible-playbook playbooks/site.yml --tags apps
+
+# 6. Verify deployment
+ansible-playbook playbooks/verify.yml
 ```
 
 ### Update Configuration
@@ -155,11 +173,15 @@ After deployment, services will be accessible at:
 
 ## Deployment Order
 
-Services have dependencies and should be deployed in this order:
+Services have dependencies and are deployed in three phases:
 
-1. **Infrastructure:** common → docker → nas_mounts
-2. **Proxy:** docker_socket_proxy → traefik
-3. **Monitoring:** beszel (hub on seraph) → beszel_agent (all)
-4. **Services:** samba, dozzle, whatsupdocker, then application-specific
+**Phase 1: Foundation (Sequential)**
+1. tailscale → common → docker → nas_mounts (if enabled)
 
-The main playbook (`site.yml`) will handle this ordering automatically when complete.
+**Phase 2: Infrastructure Services (Parallel)**
+2. docker_socket_proxy, dozzle, whatsupdocker
+
+**Phase 3: Dependent Services (Sequential)**
+3. traefik → beszel (hub on seraph) → beszel_agent → samba
+
+The main playbook (`site.yml`) handles this ordering automatically. See [playbooks/README.md](../playbooks/README.md) for detailed execution order and tag reference.

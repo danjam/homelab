@@ -1,6 +1,8 @@
 # Homelab Setup Guide
 
-⚠️ **NOTE:** This project is currently under construction. This guide documents the intended deployment workflow once the build is complete.
+This guide walks through the initial setup for deploying the homelab infrastructure with Ansible.
+
+⚠️ **NOTE:** The project is in Phase 7 (testing). Core automation is complete, but end-to-end deployment testing is in progress.
 
 ## Prerequisites
 

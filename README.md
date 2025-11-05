@@ -6,8 +6,8 @@ Ansible-based infrastructure-as-code for managing Docker Compose stacks across t
 >
 > Building Ansible automation for homelab deployment.
 >
-> **Current Progress:** Phase 6 - Orchestration Playbooks (next to create)
-> **Status:** ✅ Phases 1-4 complete (infrastructure, core services, VPN) | ⏸️ Phase 5 partially complete (deferred) | 🎯 Phase 6 ready to build
+> **Current Progress:** Phase 7 - Testing & Validation (ready to test)
+> **Status:** ✅ Phases 1-6 complete (infrastructure, core services, playbooks) | ⏸️ Phase 5 partially complete (common apps done, machine-specific deferred) | 🎯 Phase 7 next
 
 ## Overview
 
@@ -57,12 +57,13 @@ This project is actively being built. Do not attempt to deploy yet.
 - ✅ Core service roles (proxy, traefik, monitoring, file sharing)
 - ✅ 2 common application service roles (dozzle, whatsupdocker)
 - ✅ Configuration centralization (single source of truth)
+- ✅ Orchestration playbooks (site.yml, verify.yml, deploy-core.yml, stop-all.yml)
 
 **What's remaining:**
-- 🎯 Main deployment playbook (`site.yml`) - NEXT
-- 🔲 Testing and validation
-- 🔲 End-user documentation
-- ⏸️ 18 machine-specific application service roles (deferred until after testing)
+- 🎯 Testing and validation on jarvis (simplest machine) - NEXT
+- 🔲 End-user deployment documentation
+- 🔲 Repository finalization
+- ⏸️ 18 machine-specific application service roles (deferred until after core testing)
 
 **When complete, deployment will be:**
 ```bash
@@ -109,7 +110,11 @@ homelab/
 │   └── [18 more services] # 🔲 In progress
 ├── playbooks/             # Deployment playbooks
 │   ├── setup-secrets.yml # Generate Beszel keypair
-│   └── site.yml          # 🔲 Main deployment (not yet created)
+│   ├── site.yml          # ✅ Main deployment playbook
+│   ├── deploy-core.yml   # ✅ Core services deployment
+│   ├── verify.yml        # ✅ Health checks
+│   ├── stop-all.yml      # ✅ Maintenance mode
+│   └── README.md         # ✅ Playbook documentation
 ├── PLAN.md               # Implementation phases
 ├── CONTINUATION.md       # Current work status
 └── CLAUDE.md             # Project context
@@ -134,7 +139,7 @@ homelab/
 
 ## Build Status
 
-**Current Phase:** Phase 6 - Orchestration Playbooks (next to create)
+**Current Phase:** Phase 7 - Testing & Validation (ready to test on jarvis)
 
 ### Completed ✅
 - **Phase 1:** Security Foundation (single vault, secrets placeholders)
@@ -153,10 +158,15 @@ homelab/
   - ✅ dozzle (log viewer)
   - ✅ whatsupdocker (update checker)
   - ⏸️ 18 machine-specific services deferred until after core infrastructure testing
+- **Phase 6:** Orchestration Playbooks
+  - ✅ site.yml (main deployment playbook)
+  - ✅ deploy-core.yml (core services helper)
+  - ✅ verify.yml (health checks and verification)
+  - ✅ stop-all.yml (maintenance mode)
+  - ✅ playbooks/README.md (comprehensive usage documentation)
 
 ### Next 🎯
-- **Phase 6:** Orchestration Playbooks (site.yml) - READY TO BUILD
-- **Phase 7:** Testing & Validation (on jarvis first)
+- **Phase 7:** Testing & Validation (test deployment on jarvis) - NEXT
 - **Phase 8:** End-User Documentation
 - **Phase 9:** Repository Finalization
 
